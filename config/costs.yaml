@@ -1,0 +1,61 @@
+
+
+
+
+
+
+
+
+
+
+
+rates:
+  brokerage_per_order:
+    value: 20
+    unit: "₹ per executed order"
+    legs: "each order (buy and sell), flat, no % cap"
+    source: "dhan.co/pricing — Rs 20 per executed order, F&O"
+    effective: "not stated by the source"
+    verified: true
+  stt_sell_pct:
+    value: 0.15
+    unit: "% of sell premium"
+    legs: "sell leg only"
+    source: "NSE circular NSE/FATAX/73524 (31-Mar-2026): Finance Act 2026 — sale of an option 0.15% (was 0.10%)"
+    effective: "2026-04-01"
+    verified: true
+  exchange_pct:
+    value: 0.0355299
+    unit: "% of premium turnover"
+    legs: "both legs"
+    source: "NSE circular NSE/FA/73061 (27-Feb-2026): equity options Rs 3,552.99 per crore each side"
+    effective: "2026-03-01"
+    verified: true
+  sebi_per_crore:
+    value: 10
+    unit: "₹ per crore of premium turnover"
+    legs: "both legs"
+    source: "SEBI (Stock Brokers) Regulations, 2026, No. SEBI/LAD-NRO/GN/2026/291 (Gazette 7-Jan-2026), reg. 41(1): equity derivatives 0.00010 % of turnover (Rs 10 per crore); Explanation (B): options turnover = premium traded (+ notional value if exercised / assigned, not modelled). Read 2026-10-01 (T-231)."
+    effective: "2026-01-07"
+    verified: true
+  stamp_buy_pct:
+    value: 0.003
+    unit: "% of buy premium"
+    legs: "buy leg only"
+    source: "Indian Stamp Act 1899 as amended by Finance Act 2019 (7 of 2019), Dept of Revenue consolidated text (dor.gov.in): Sch. I Art. 56A(d)(ii) options (equity and commodity) 0.003 %; s.21 proviso (i) market value = the premium paid by the buyer; s.9A(1)(a) collected from the buyer; commenced by S.O. 1226(E) 30-Mar-2020. Read 2026-10-01 (T-231)."
+    effective: "2020-07-01"
+    verified: true
+  ipft_per_crore:
+    value: 0.01
+    unit: "₹ per crore of premium turnover"
+    legs: "both legs"
+    source: "NSE circular NSE/FA/73061 (27-Feb-2026): IPFT Rs 0.01 per crore each side"
+    effective: "2026-03-01"
+    verified: true
+  gst_pct:
+    value: 18
+    unit: "% of (brokerage + exchange + SEBI + IPFT)"
+    legs: "never on STT or stamp duty"
+    source: "dhan.co/pricing"
+    effective: "not stated by the source"
+    verified: true

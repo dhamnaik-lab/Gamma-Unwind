@@ -1,0 +1,41 @@
+
+
+
+
+
+
+
+schema: gammad.market_sessions/1
+eras:
+  - era_id: pre-cas
+    effective_from: 2017-01-01
+    fo_open: '09:15'
+    fo_close: '15:30'
+    fo_day_mark_at: '15:35'
+    cm_open: '09:15'
+    cm_continuous_close: '15:30'
+    cm_closing_auction: false
+    sources:
+      effective_from: 'NSE session timings'
+      fo_open: 'NSE session timings'
+      fo_close: 'NSE session timings'
+      fo_day_mark_at: 'NSE session timings'
+      cm_open: 'NSE session timings'
+      cm_continuous_close: 'NSE session timings'
+      cm_closing_auction: 'NSE session timings'
+  - era_id: cas-2026-08-03
+    effective_from: 2026-08-03
+    fo_open: '09:15'
+    fo_close: '15:40'
+    fo_day_mark_at: '15:45'
+    cm_open: '09:15'
+    cm_continuous_close: '15:15'
+    cm_closing_auction: true
+    sources:
+      effective_from: 'NSE session timings'
+      fo_open: 'NSE session timings'
+      fo_close: 'NSE session timings'
+      fo_day_mark_at: 'NSE session timings'
+      cm_open: 'NSE session timings'
+      cm_continuous_close: 'NSE session timings'
+      cm_closing_auction: 'NSE session timings'

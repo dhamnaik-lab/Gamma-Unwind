@@ -1,0 +1,93 @@
+
+
+
+
+
+
+zones:
+  pivot_len: 10
+  atr_len: 50
+  zone_depth: 2.5
+  guard_mult: 2.0
+  zone_memory: 20
+  break_on_wick: false
+  daily_bars: 2000
+  tie_rule: right_strict
+
+proximity:
+  stock_band_pct: 2.5
+  strike_band_pct: 2.5
+  top_n_oi: 2
+  min_premium_ticks: 0
+  min_oi_lots: 50
+  min_prev_turnover_rs: 100000
+
+expiry:
+  expiry_dte_threshold: 4
+
+schedule:
+  mark_levels: ["09:20", "16:00"]
+  build_watchlists: ["09:20", "13:15"]
+
+  token_poll_minutes: 10
+  preopen_build: "09:10"
+  refresh: {first: "09:30", every_min: 15, last: "14:45"}
+  group_additions: ["10:15", "11:15", "12:15", "13:15", "14:15"]
+
+watcher:
+  base_tf_min: 1
+  signal_tf_min: 5
+  display_tf_min: 15
+  oi_drop_alert: 0.08
+  oi_drop_tolerance: 0.01
+  oi_drop_strong: 0.12
+
+  vol_sma_len: 20
+  vol_build_min_of_last3: 2
+  consol_bars: 6
+  consol_atr_len: 14
+  consol_range_atr: 1.0
+  consol_drift_range_atr: 1.5
+
+  h_min_range_ticks: 2
+  h_max_zero_vol_slots: 1
+
+alerts:
+  group_rate_per_min: 20
+  per_chat_rate_per_sec: 1
+  token_warn_hours: [24, 2]
+  late_day_warn_ist: "14:30"
+  expiry_warn_dte: 7
+
+hold:
+  swing_lists: [BREAKDOWN-PE, BREAKOUT-CE, EXPIRY-PE, EXPIRY-CE]
+  intraday_lists: []
+  swing_days: 5
+
+gates:
+  enabled: true
+  all_lists: true
+  zone_max_gap_pct: 1.0
+  liq_sma_bars: 20
+  liq_min_avg_lots: 5.0
+  liq_max_zero_vol_bars: 5
+  direction_enabled: true
+  unwind_enabled: true
+  unwind_min_ticks: 1
+  v1_direction_mode: any
+  v1_zone_atr_k: 0.5
+  v1_zone_max_pct: 2.5
+
+
+
+
+still_watching:
+  enabled: true
+  stop: s2_close
+  target: daily_zone
+  trail: {mode: x9a, k: 3.0, atr_len: 14, tf_min: 15}
+  eve_exit_hm: era_day_end
+  dte_max: 4
+  base_atr_max: 2.0
+  entry_cutoff_hm: "15:20"
+  ban_list: {enabled: true, fetch_hm: "08:45", fail: closed}

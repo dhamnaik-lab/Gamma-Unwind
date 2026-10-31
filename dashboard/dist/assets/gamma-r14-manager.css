@@ -1,0 +1,22 @@
+#gu-r14-panel{margin:12px 0 26px;padding:18px;border-radius:12px;border:1px solid #3b4862;background:#151921;color:#e5edfc;font-family:system-ui,Arial,sans-serif;font-size:13px}
+#gu-r14-panel .gu-title{font-size:17px;font-weight:700;margin:0 0 8px}
+#gu-r14-panel .gu-subtitle,#gu-r14-panel .gu-muted{color:#a5b1c9;line-height:1.45;margin:8px 0}
+#gu-r14-panel .gu-summary{background:#10141d;padding:10px;border-radius:7px;margin:12px 0}
+#gu-r14-panel .gu-pickers{display:grid;grid-template-columns:repeat(auto-fit,minmax(126px,1fr));gap:7px}
+#gu-r14-panel button{font:inherit;color:#d7e5ff;cursor:pointer}
+#gu-r14-panel button:disabled{cursor:not-allowed;opacity:.5}
+#gu-r14-panel .gu-picker{border:1px solid #4c5260;padding:9px;border-radius:6px;background:#111821}
+#gu-r14-panel .gu-picker.gu-selected{border-color:#9ab9f6;background:#243045}
+#gu-r14-panel .gu-body{margin-top:14px}
+#gu-r14-panel .gu-body h3{font-size:16px;margin:12px 0}
+#gu-r14-panel .gu-status{display:flex;flex-wrap:wrap;gap:5px;margin:12px 0}
+#gu-r14-panel .gu-status span{padding:5px 7px;border-radius:5px;border:1px solid #454b59;font-family:monospace;font-size:11px}
+#gu-r14-panel .gu-present{color:#74dbab} #gu-r14-panel .gu-missing{color:#e8ac91}
+#gu-r14-panel .gu-box{margin-top:12px;padding:13px;border:1px solid #3d4554;background:#101319;border-radius:9px}
+#gu-r14-panel .gu-box h4{font-size:14px;margin:0 0 7px}
+#gu-r14-panel .gu-field{display:flex;flex-direction:column;gap:5px;margin:8px 0;color:#b6c4d9;font-family:monospace;font-size:12px}
+#gu-r14-panel .gu-field:has(input[type=checkbox]){flex-direction:row;align-items:center;font-family:inherit}
+#gu-r14-panel input:not([type=checkbox]){width:100%;color:#e7edf7;background:#1d2430;border:1px solid #444e61;padding:8px 10px;border-radius:5px;box-sizing:border-box}
+#gu-r14-panel input[type=checkbox]{width:15px;height:15px}
+#gu-r14-panel .gu-action{border:1px solid #68748e;background:#202a3c;padding:9px 12px;border-radius:5px;margin:6px 6px 2px 0}
+#gu-r14-panel .gu-note{margin:14px 0 0;color:#ffb47f} #gu-r14-panel .gu-ok{color:#70d49c;margin:10px 0}

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer"><meta http-equiv="Cache-Control" content="no-store">
+<title>Broker login | GAMMA-UNWIND</title>
+<link rel="stylesheet" href="/broker-login.css">
+<script defer src="/broker-login.js"></script>
+</head>
+<body>
+<aside class="sidebar"><div class="logo">GAMMA-UNWIND <small>0.8.9 · compatibility R1</small></div>
+<a href="/#/overview">Overview</a><a href="/#/watchlists">Watchlists</a><a class="active" href="/broker-login.html">Broker login</a>
+<div class="sidefoot">Only one broker can be active per session. This page never places orders.</div></aside>
+<main><header><div><p class="eyebrow">CONNECTIONS / BROKER LOGIN</p><h1>Broker connections</h1><p class="muted">Choose from the ten registered adapters. Login is available for the active broker; changes require a restart.</p></div>
+<a class="back" href="/#/overview">Back to desk</a></header>
+<div class="banner" id="banner">Reading local broker registry...</div>
+<section class="content"><div><div class="sectiontitle"><h2>Available brokers</h2><span id="count">—</span></div><div class="cards" id="cards"></div></div>
+<div class="detail"><p class="eyebrow">BROKER DETAILS</p><h2 id="detail-name">Select a broker</h2><p class="muted" id="detail-description"></p>
+<div class="rowstatus"><span id="detail-status"></span><span id="detail-active"></span></div>
+<h3>Configuration in .env</h3><div class="keys" id="keys"></div><p class="note">Credentials are edited only in your local <code>.env</code> file. This page never displays saved secrets.</p>
+<button type="button" id="stage" class="secondary" hidden>Choose for next restart</button>
+<div id="stage-warning" class="warning" hidden>Selection staged. Stop GAMMA-UNWIND, restart using Start GAMMA.cmd, then return here. Existing broker session remains active until restart.</div>
+<hr><h3>Daily login</h3><div id="login-status" class="muted">Select the active broker to log in.</div>
+<div id="login-panel" hidden><a id="login-link" class="authlink" href="#" target="_blank" rel="noopener noreferrer" hidden>Open broker authorization page</a>
+<form id="login-form" hidden><div id="login-fields"></div><button type="submit">Submit authorization</button></form>
+<form id="token-form"><label for="token">Paste a daily access token instead</label><textarea id="token" autocomplete="off" spellcheck="false" placeholder="Token stays in this browser form until submitted"></textarea><button type="submit" class="secondary">Validate and save token</button></form>
+<p class="note">Authorization URLs and access tokens are sensitive. Never paste them into chat or screenshots. Keep trading permissions disabled when paper testing.</p></div>
+<div class="message" id="message" role="status" aria-live="polite"></div>
+</div></section>
+<footer>Client edition · Read-only signals · Brokerage data access is governed by each provider's API plan.</footer></main>
+</body></html>

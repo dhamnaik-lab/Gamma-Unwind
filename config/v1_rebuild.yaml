@@ -1,0 +1,70 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+enabled: false
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+carry:
+  entry_mode: same_bar
+
+fixed:
+  strike_window_pct: 2.5
+  strikes: [HOI-1, HOI-2]
+  zones: daily_pivots
+  break_on: close_5m
+  oi_unwind_required: true
+  oi_seed_listed: today
+  entry_rearm: every_close_through
+  unwind_window_bars: 0
+  reentry_max_per_stock_side_day: 1
+  reentry_after: stop
+  latest_entry_time: '15:10'
+  expiry_selection: D59
+  stop_pe_level: resistance
+  stop_ce_level: support
+  broken_edge_stop: false
+  no_level_fallback: [nearest_1h_zone, cap_only]
+  day5_exit: false
+  expiry_exit: false
+  settlement_close: settled_at_expiry
+  no_progress_gain_pct: 10
+  intraday_close: last_5m_bar

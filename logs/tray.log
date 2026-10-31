@@ -1,0 +1,219 @@
+2026-10-26 13:10:35,150 INFO    gammad.config: settings: no env keys set
+2026-10-26 13:10:35,158 ERROR   gammad.config: settings: telegram (client edition): TELEGRAM_GROUP_ID is not set: no group alerts will be sent
+2026-10-26 13:10:35,164 INFO    gammad.tray.supervisor: tray: phone lines to the personal chat: off
+2026-10-26 13:10:36,067 INFO    gammad.tray.supervisor: tray: supervisor pid 25932, port 8760
+2026-10-26 13:10:36,078 INFO    gammad.tray.supervisor: tray: service started, pid 18092: E:\TA Projects\GAMMA-UNWIND-client-0.8.9-win64\python\pythonw.exe -m gammad serve --no-tray
+2026-10-26 13:10:36,088 INFO    gammad.tray.tray: tray: autostart is owner-edition only; skipped (client edition)
+2026-10-26 13:10:43,248 INFO    gammad.tray.supervisor: tray: service running on port 8760
+2026-10-26 13:10:43,263 INFO    gammad.tray.keepawake: tray: keep-awake on
+2026-10-26 15:51:00,454 INFO    gammad.tray.keepawake: tray: keep-awake off
+2026-10-26 16:10:34,760 INFO    gammad.tray.supervisor: tray: service stopped (clean, exit 0, 2.1 s)
+2026-10-26 16:40:49,282 INFO    gammad.config: settings: BROKER<-.env FYERS_APP_ID<-.env FYERS_SECRET_KEY<-.env FYERS_REDIRECT_URI<-.env
+2026-10-26 16:40:49,291 ERROR   gammad.config: settings: telegram (client edition): TELEGRAM_GROUP_ID is not set: no group alerts will be sent
+2026-10-26 16:40:49,293 INFO    gammad.tray.supervisor: tray: phone lines to the personal chat: off
+2026-10-26 16:40:50,080 INFO    gammad.tray.supervisor: tray: supervisor pid 25620, port 8760
+2026-10-26 16:40:50,092 INFO    gammad.tray.supervisor: tray: service started, pid 19060: E:\TA Projects\GAMMA-UNWIND-client-0.8.9-win64\python\pythonw.exe -m gammad serve --no-tray
+2026-10-26 16:40:50,094 INFO    gammad.tray.tray: tray: autostart is owner-edition only; skipped (client edition)
+2026-10-26 16:40:53,447 INFO    gammad.tray.supervisor: tray: service running on port 8760
+2026-10-26 16:47:34,639 INFO    gammad.tray.supervisor: tray: service stopped (clean, exit 0, 1.6 s)
+2026-10-26 16:47:34,657 INFO    gammad.tray.stopped_page: tray: stopped page on http://127.0.0.1:8760
+2026-10-26 16:47:37,694 INFO    gammad.tray.stopped_page: tray: stopped page closed
+2026-10-27 10:47:33,845 INFO    gammad.config: settings: BROKER<-.env FYERS_APP_ID<-.env FYERS_SECRET_KEY<-.env FYERS_ACCESS_TOKEN<-.env FYERS_REDIRECT_URI<-.env
+2026-10-27 10:47:33,855 ERROR   gammad.config: settings: telegram (client edition): TELEGRAM_GROUP_ID is not set: no group alerts will be sent
+2026-10-27 10:47:33,857 INFO    gammad.tray.supervisor: tray: phone lines to the personal chat: off
+2026-10-27 10:47:34,529 INFO    gammad.tray.supervisor: tray: supervisor pid 18116, port 8760
+2026-10-27 10:47:34,540 INFO    gammad.tray.supervisor: tray: service started, pid 24672: E:\TA Projects\GAMMA-UNWIND-client-0.8.9-win64\python\pythonw.exe -m gammad serve --no-tray
+2026-10-27 10:47:34,542 INFO    gammad.tray.tray: tray: autostart is owner-edition only; skipped (client edition)
+2026-10-27 10:47:37,931 INFO    gammad.tray.supervisor: tray: service running on port 8760
+2026-10-27 10:47:37,947 INFO    gammad.tray.keepawake: tray: keep-awake on
+2026-10-27 11:36:03,159 INFO    gammad.tray.supervisor: tray: service stopped (clean, exit 0, 3.5 s)
+2026-10-27 11:36:03,199 INFO    gammad.tray.stopped_page: tray: stopped page on http://127.0.0.1:8760
+2026-10-27 11:36:03,200 INFO    gammad.tray.keepawake: tray: keep-awake off
+2026-10-27 11:36:04,654 INFO    gammad.tray.stopped_page: tray: stopped page closed
+2026-10-27 13:37:42,427 INFO    gammad.config: settings: BROKER<-.env FYERS_APP_ID<-.env FYERS_SECRET_KEY<-.env FYERS_ACCESS_TOKEN<-.env FYERS_REDIRECT_URI<-.env
+2026-10-27 13:37:42,436 ERROR   gammad.config: settings: telegram (client edition): TELEGRAM_GROUP_ID is not set: no group alerts will be sent
+2026-10-27 13:37:42,437 INFO    gammad.tray.supervisor: tray: phone lines to the personal chat: off
+2026-10-27 13:37:43,194 INFO    gammad.tray.supervisor: tray: supervisor pid 26924, port 8760
+2026-10-27 13:37:43,206 INFO    gammad.tray.supervisor: tray: service started, pid 28084: E:\TA Projects\GAMMA-UNWIND-client-0.8.9-win64\python\pythonw.exe -m gammad serve --no-tray
+2026-10-27 13:37:43,208 INFO    gammad.tray.tray: tray: autostart is owner-edition only; skipped (client edition)
+2026-10-27 13:37:46,613 INFO    gammad.tray.supervisor: tray: service running on port 8760
+2026-10-27 13:37:46,631 INFO    gammad.tray.keepawake: tray: keep-awake on
+2026-10-27 13:56:55,857 WARNING gammad.tray.supervisor: tray: service pid 28084 did not stop in 10 s; terminating
+2026-10-27 13:56:55,908 INFO    gammad.tray.supervisor: tray: service stopped (terminated, exit 1, 10.1 s)
+2026-10-27 13:56:55,920 INFO    gammad.tray.keepawake: tray: keep-awake off
+2026-10-27 14:26:59,359 INFO    gammad.config: settings: BROKER<-.env FYERS_APP_ID<-.env FYERS_SECRET_KEY<-.env FYERS_ACCESS_TOKEN<-.env FYERS_REDIRECT_URI<-.env
+2026-10-27 14:26:59,369 ERROR   gammad.config: settings: telegram (client edition): TELEGRAM_GROUP_ID is not set: no group alerts will be sent
+2026-10-27 14:26:59,371 INFO    gammad.tray.supervisor: tray: phone lines to the personal chat: off
+2026-10-27 14:27:00,277 INFO    gammad.tray.supervisor: tray: supervisor pid 29176, port 8760
+2026-10-27 14:27:00,290 INFO    gammad.tray.supervisor: tray: service started, pid 5720: E:\TA Projects\GAMMA-UNWIND-client-0.8.9-win64\python\pythonw.exe -m gammad serve --no-tray
+2026-10-27 14:27:00,292 INFO    gammad.tray.tray: tray: autostart is owner-edition only; skipped (client edition)
+2026-10-27 14:27:03,703 INFO    gammad.tray.supervisor: tray: service running on port 8760
+2026-10-27 14:27:03,722 INFO    gammad.tray.keepawake: tray: keep-awake on
+2026-10-27 14:35:19,503 INFO    gammad.tray.supervisor: tray: service stopped (clean, exit 0, 2.9 s)
+2026-10-27 14:35:19,518 INFO    gammad.tray.stopped_page: tray: stopped page on http://127.0.0.1:8760
+2026-10-27 14:35:19,518 INFO    gammad.tray.keepawake: tray: keep-awake off
+2026-10-27 14:35:21,369 INFO    gammad.tray.stopped_page: tray: stopped page closed
+2026-10-27 14:49:22,338 INFO    gammad.config: settings: BROKER<-.env FYERS_APP_ID<-.env FYERS_SECRET_KEY<-.env FYERS_ACCESS_TOKEN<-.env FYERS_REDIRECT_URI<-.env
+2026-10-27 14:49:22,349 ERROR   gammad.config: settings: telegram (client edition): TELEGRAM_GROUP_ID is not set: no group alerts will be sent
+2026-10-27 14:49:22,351 INFO    gammad.tray.supervisor: tray: phone lines to the personal chat: off
+2026-10-27 14:49:23,166 INFO    gammad.tray.supervisor: tray: supervisor pid 15048, port 8760
+2026-10-27 14:49:23,179 INFO    gammad.tray.supervisor: tray: service started, pid 22172: E:\TA Projects\GAMMA-UNWIND-client-0.8.9-win64\python\pythonw.exe -m gammad serve --no-tray
+2026-10-27 14:49:23,181 INFO    gammad.tray.tray: tray: autostart is owner-edition only; skipped (client edition)
+2026-10-27 14:49:26,592 INFO    gammad.tray.supervisor: tray: service running on port 8760
+2026-10-27 14:49:26,608 INFO    gammad.tray.keepawake: tray: keep-awake on
+2026-10-27 14:53:47,202 INFO    gammad.tray.supervisor: tray: service stopped (clean, exit 0, 2.3 s)
+2026-10-27 14:53:47,218 INFO    gammad.tray.stopped_page: tray: stopped page on http://127.0.0.1:8760
+2026-10-27 14:53:47,218 INFO    gammad.tray.keepawake: tray: keep-awake off
+2026-10-27 14:53:48,865 INFO    gammad.tray.stopped_page: tray: stopped page closed
+2026-10-27 15:07:28,011 INFO    gammad.config: settings: BROKER<-.env FYERS_APP_ID<-.env FYERS_SECRET_KEY<-.env FYERS_ACCESS_TOKEN<-.env FYERS_REDIRECT_URI<-.env
+2026-10-27 15:07:28,020 ERROR   gammad.config: settings: telegram (client edition): TELEGRAM_GROUP_ID is not set: no group alerts will be sent
+2026-10-27 15:07:28,021 INFO    gammad.tray.supervisor: tray: phone lines to the personal chat: off
+2026-10-27 15:07:28,752 INFO    gammad.tray.supervisor: tray: supervisor pid 24392, port 8760
+2026-10-27 15:07:28,764 INFO    gammad.tray.supervisor: tray: service started, pid 26024: E:\TA Projects\GAMMA-UNWIND-client-0.8.9-win64\python\pythonw.exe -m gammad serve --no-tray
+2026-10-27 15:07:28,766 INFO    gammad.tray.tray: tray: autostart is owner-edition only; skipped (client edition)
+2026-10-27 15:07:32,176 INFO    gammad.tray.supervisor: tray: service running on port 8760
+2026-10-27 15:07:32,190 INFO    gammad.tray.keepawake: tray: keep-awake on
+2026-10-27 15:08:25,525 INFO    gammad.tray.supervisor: tray: service stopped (clean, exit 0, 3.5 s)
+2026-10-27 15:08:25,539 INFO    gammad.tray.stopped_page: tray: stopped page on http://127.0.0.1:8760
+2026-10-27 15:08:25,539 INFO    gammad.tray.keepawake: tray: keep-awake off
+2026-10-27 15:08:26,750 INFO    gammad.tray.stopped_page: tray: stopped page closed
+2026-10-27 15:09:11,754 INFO    gammad.config: settings: BROKER<-.env FYERS_APP_ID<-.env FYERS_SECRET_KEY<-.env FYERS_ACCESS_TOKEN<-.env FYERS_REDIRECT_URI<-.env
+2026-10-27 15:09:11,763 ERROR   gammad.config: settings: telegram (client edition): TELEGRAM_GROUP_ID is not set: no group alerts will be sent
+2026-10-27 15:09:11,764 INFO    gammad.tray.supervisor: tray: phone lines to the personal chat: off
+2026-10-27 15:09:12,458 INFO    gammad.tray.supervisor: tray: supervisor pid 22360, port 8760
+2026-10-27 15:09:12,470 INFO    gammad.tray.supervisor: tray: service started, pid 16804: E:\TA Projects\GAMMA-UNWIND-client-0.8.9-win64\python\pythonw.exe -m gammad serve --no-tray
+2026-10-27 15:09:12,472 INFO    gammad.tray.tray: tray: autostart is owner-edition only; skipped (client edition)
+2026-10-27 15:09:15,786 INFO    gammad.tray.supervisor: tray: service running on port 8760
+2026-10-27 15:09:15,805 INFO    gammad.tray.keepawake: tray: keep-awake on
+2026-10-27 15:12:09,285 INFO    gammad.tray.supervisor: tray: service stopped (clean, exit 0, 2.7 s)
+2026-10-27 15:12:09,296 INFO    gammad.tray.stopped_page: tray: stopped page on http://127.0.0.1:8760
+2026-10-27 15:12:09,296 INFO    gammad.tray.keepawake: tray: keep-awake off
+2026-10-27 15:12:12,558 INFO    gammad.tray.stopped_page: tray: stopped page closed
+2026-10-27 16:02:54,688 INFO    gammad.config: settings: BROKER<-.env FYERS_APP_ID<-.env FYERS_SECRET_KEY<-.env FYERS_ACCESS_TOKEN<-.env FYERS_REDIRECT_URI<-.env
+2026-10-27 16:02:54,703 ERROR   gammad.config: settings: telegram (client edition): TELEGRAM_GROUP_ID is not set: no group alerts will be sent
+2026-10-27 16:02:54,704 INFO    gammad.tray.supervisor: tray: phone lines to the personal chat: off
+2026-10-27 16:02:55,612 INFO    gammad.tray.supervisor: tray: supervisor pid 19308, port 8760
+2026-10-27 16:02:55,625 INFO    gammad.tray.supervisor: tray: service started, pid 10228: E:\TA Projects\GAMMA-UNWIND-client-0.8.9-win64\python\pythonw.exe -m gammad serve --no-tray
+2026-10-27 16:02:55,627 INFO    gammad.tray.tray: tray: autostart is owner-edition only; skipped (client edition)
+2026-10-27 16:02:58,977 INFO    gammad.tray.supervisor: tray: service running on port 8760
+2026-10-27 16:25:30,287 INFO    gammad.tray.supervisor: tray: service stopped (clean, exit 0, 1.3 s)
+2026-10-27 16:25:30,302 INFO    gammad.tray.stopped_page: tray: stopped page on http://127.0.0.1:8760
+2026-10-27 16:25:32,755 INFO    gammad.tray.stopped_page: tray: stopped page closed
+2026-10-27 17:53:56,496 INFO    gammad.config: settings: BROKER<-.env FYERS_APP_ID<-.env FYERS_SECRET_KEY<-.env FYERS_ACCESS_TOKEN<-.env FYERS_REDIRECT_URI<-.env
+2026-10-27 17:53:56,508 ERROR   gammad.config: settings: telegram (client edition): TELEGRAM_GROUP_ID is not set: no group alerts will be sent
+2026-10-27 17:53:56,509 INFO    gammad.tray.supervisor: tray: phone lines to the personal chat: off
+2026-10-27 17:53:57,360 INFO    gammad.tray.supervisor: tray: supervisor pid 5704, port 8760
+2026-10-27 17:53:57,372 INFO    gammad.tray.supervisor: tray: service started, pid 26008: E:\TA Projects\GAMMA-UNWIND-client-0.8.9-win64\python\pythonw.exe -m gammad serve --no-tray
+2026-10-27 17:53:57,373 INFO    gammad.tray.tray: tray: autostart is owner-edition only; skipped (client edition)
+2026-10-27 17:54:00,765 INFO    gammad.tray.supervisor: tray: service running on port 8760
+2026-10-27 17:54:05,196 INFO    gammad.config: settings: BROKER<-.env FYERS_APP_ID<-.env FYERS_SECRET_KEY<-.env FYERS_ACCESS_TOKEN<-.env FYERS_REDIRECT_URI<-.env
+2026-10-27 17:54:05,204 ERROR   gammad.config: settings: telegram (client edition): TELEGRAM_GROUP_ID is not set: no group alerts will be sent
+2026-10-27 17:54:05,205 INFO    gammad.tray.supervisor: tray: phone lines to the personal chat: off
+2026-10-27 17:54:05,207 INFO    gammad.tray.supervisor: tray: already running (pid 5704); asked it to start the service (data/START)
+2026-10-27 17:54:05,837 INFO    gammad.tray.supervisor: tray: data/START found; service already running
+2026-10-27 18:07:12,336 INFO    gammad.tray.supervisor: tray: service stopped (clean, exit 0, 0.8 s)
+2026-10-27 18:07:12,353 INFO    gammad.tray.stopped_page: tray: stopped page on http://127.0.0.1:8760
+2026-10-27 18:07:14,831 INFO    gammad.tray.stopped_page: tray: stopped page closed
+2026-10-27 19:42:44,577 INFO    gammad.config: settings: BROKER<-.env FYERS_APP_ID<-.env FYERS_SECRET_KEY<-.env FYERS_ACCESS_TOKEN<-.env FYERS_REDIRECT_URI<-.env
+2026-10-27 19:42:44,589 ERROR   gammad.config: settings: telegram (client edition): TELEGRAM_GROUP_ID is not set: no group alerts will be sent
+2026-10-27 19:42:44,590 INFO    gammad.tray.supervisor: tray: phone lines to the personal chat: off
+2026-10-27 19:42:45,278 INFO    gammad.tray.supervisor: tray: supervisor pid 6104, port 8760
+2026-10-27 19:42:45,290 INFO    gammad.tray.supervisor: tray: service started, pid 21620: E:\TA Projects\GAMMA-UNWIND-client-0.8.9-win64\python\pythonw.exe -m gammad serve --no-tray
+2026-10-27 19:42:45,292 INFO    gammad.tray.tray: tray: autostart is owner-edition only; skipped (client edition)
+2026-10-27 19:42:48,701 INFO    gammad.tray.supervisor: tray: service running on port 8760
+2026-10-27 20:05:06,429 INFO    gammad.tray.supervisor: tray: service stopped (clean, exit 0, 0.9 s)
+2026-10-27 20:05:06,445 INFO    gammad.tray.stopped_page: tray: stopped page on http://127.0.0.1:8760
+2026-10-27 20:05:08,280 INFO    gammad.tray.stopped_page: tray: stopped page closed
+2026-10-27 20:46:28,223 INFO    gammad.config: settings: BROKER<-.env FYERS_APP_ID<-.env FYERS_SECRET_KEY<-.env FYERS_ACCESS_TOKEN<-.env FYERS_REDIRECT_URI<-.env
+2026-10-27 20:46:28,231 ERROR   gammad.config: settings: telegram (client edition): TELEGRAM_GROUP_ID is not set: no group alerts will be sent
+2026-10-27 20:46:28,233 INFO    gammad.tray.supervisor: tray: phone lines to the personal chat: off
+2026-10-27 20:46:28,978 INFO    gammad.tray.supervisor: tray: supervisor pid 22680, port 8760
+2026-10-27 20:46:28,991 INFO    gammad.tray.supervisor: tray: service started, pid 27780: E:\TA Projects\GAMMA-UNWIND-client-0.8.9-win64\python\pythonw.exe -m gammad serve --no-tray
+2026-10-27 20:46:28,993 INFO    gammad.tray.tray: tray: autostart is owner-edition only; skipped (client edition)
+2026-10-27 20:46:32,388 INFO    gammad.tray.supervisor: tray: service running on port 8760
+2026-10-27 21:19:45,227 INFO    gammad.tray.supervisor: tray: service stopped (clean, exit 0, 0.7 s)
+2026-10-27 21:19:45,240 INFO    gammad.tray.stopped_page: tray: stopped page on http://127.0.0.1:8760
+2026-10-27 21:19:47,876 INFO    gammad.tray.stopped_page: tray: stopped page closed
+2026-10-27 22:47:55,107 INFO    gammad.config: settings: BROKER<-.env FYERS_APP_ID<-.env FYERS_SECRET_KEY<-.env FYERS_ACCESS_TOKEN<-.env FYERS_REDIRECT_URI<-.env
+2026-10-27 22:47:55,117 ERROR   gammad.config: settings: telegram (client edition): TELEGRAM_GROUP_ID is not set: no group alerts will be sent
+2026-10-27 22:47:55,119 INFO    gammad.tray.supervisor: tray: phone lines to the personal chat: off
+2026-10-27 22:47:55,823 INFO    gammad.tray.supervisor: tray: supervisor pid 28104, port 8760
+2026-10-27 22:47:55,835 INFO    gammad.tray.supervisor: tray: service started, pid 11364: E:\TA Projects\GAMMA-UNWIND-client-0.8.9-win64\python\pythonw.exe -m gammad serve --no-tray
+2026-10-27 22:47:55,837 INFO    gammad.tray.tray: tray: autostart is owner-edition only; skipped (client edition)
+2026-10-27 22:47:59,207 INFO    gammad.tray.supervisor: tray: service running on port 8760
+2026-10-27 22:53:26,361 INFO    gammad.tray.supervisor: tray: service stopped (clean, exit 0, 1.1 s)
+2026-10-27 22:53:26,376 INFO    gammad.tray.stopped_page: tray: stopped page on http://127.0.0.1:8760
+2026-10-27 22:53:28,787 INFO    gammad.tray.stopped_page: tray: stopped page closed
+2026-10-27 23:35:17,302 INFO    gammad.config: settings: BROKER<-.env FYERS_APP_ID<-.env FYERS_SECRET_KEY<-.env FYERS_ACCESS_TOKEN<-.env FYERS_REDIRECT_URI<-.env
+2026-10-27 23:35:17,311 ERROR   gammad.config: settings: telegram (client edition): TELEGRAM_GROUP_ID is not set: no group alerts will be sent
+2026-10-27 23:35:17,313 INFO    gammad.tray.supervisor: tray: phone lines to the personal chat: off
+2026-10-27 23:35:18,028 INFO    gammad.tray.supervisor: tray: supervisor pid 27972, port 8760
+2026-10-27 23:35:18,047 INFO    gammad.tray.supervisor: tray: service started, pid 26312: E:\TA Projects\GAMMA-UNWIND-client-0.8.9-win64\python\pythonw.exe -m gammad serve --no-tray
+2026-10-27 23:35:18,049 INFO    gammad.tray.tray: tray: autostart is owner-edition only; skipped (client edition)
+2026-10-27 23:35:21,450 INFO    gammad.tray.supervisor: tray: service running on port 8760
+2026-10-27 23:46:25,994 INFO    gammad.tray.supervisor: tray: service stopped (clean, exit 0, 0.7 s)
+2026-10-27 23:46:26,013 INFO    gammad.tray.stopped_page: tray: stopped page on http://127.0.0.1:8760
+2026-10-27 23:46:30,699 INFO    gammad.tray.stopped_page: tray: stopped page closed
+2026-10-28 00:10:10,059 INFO    gammad.config: settings: BROKER<-.env FYERS_APP_ID<-.env FYERS_SECRET_KEY<-.env FYERS_ACCESS_TOKEN<-.env FYERS_REDIRECT_URI<-.env
+2026-10-28 00:10:10,070 ERROR   gammad.config: settings: telegram (client edition): TELEGRAM_GROUP_ID is not set: no group alerts will be sent
+2026-10-28 00:10:10,071 INFO    gammad.tray.supervisor: tray: phone lines to the personal chat: off
+2026-10-28 00:10:10,754 INFO    gammad.tray.supervisor: tray: supervisor pid 15228, port 8760
+2026-10-28 00:10:10,766 INFO    gammad.tray.supervisor: tray: service started, pid 19780: E:\TA Projects\GAMMA-UNWIND-client-0.8.9-win64\python\pythonw.exe -m gammad serve --no-tray
+2026-10-28 00:10:10,767 INFO    gammad.tray.tray: tray: autostart is owner-edition only; skipped (client edition)
+2026-10-28 00:10:14,192 INFO    gammad.tray.supervisor: tray: service running on port 8760
+2026-10-28 00:32:27,773 INFO    gammad.tray.supervisor: tray: service stopped (clean, exit 0, 1.5 s)
+2026-10-28 00:32:27,792 INFO    gammad.tray.stopped_page: tray: stopped page on http://127.0.0.1:8760
+2026-10-28 00:32:29,418 INFO    gammad.tray.stopped_page: tray: stopped page closed
+2026-10-28 13:22:48,371 INFO    gammad.config: settings: BROKER<-.env FYERS_APP_ID<-.env FYERS_SECRET_KEY<-.env FYERS_ACCESS_TOKEN<-.env FYERS_REDIRECT_URI<-.env
+2026-10-28 13:22:48,380 ERROR   gammad.config: settings: telegram (client edition): TELEGRAM_GROUP_ID is not set: no group alerts will be sent
+2026-10-28 13:22:48,382 INFO    gammad.tray.supervisor: tray: phone lines to the personal chat: off
+2026-10-28 13:22:49,122 INFO    gammad.tray.supervisor: tray: supervisor pid 12708, port 8760
+2026-10-28 13:22:49,134 INFO    gammad.tray.supervisor: tray: service started, pid 24396: E:\TA Projects\GAMMA-UNWIND-client-0.8.9-win64\python\pythonw.exe -m gammad serve --no-tray
+2026-10-28 13:22:49,136 INFO    gammad.tray.tray: tray: autostart is owner-edition only; skipped (client edition)
+2026-10-28 13:22:52,604 INFO    gammad.tray.supervisor: tray: service running on port 8760
+2026-10-28 13:22:52,621 INFO    gammad.tray.keepawake: tray: keep-awake on
+2026-10-28 13:26:37,338 INFO    gammad.tray.supervisor: tray: data/QUIT found; stopping the service and exiting
+2026-10-28 13:26:39,929 INFO    gammad.tray.supervisor: tray: service stopped (clean, exit 0, 2.6 s)
+2026-10-28 13:26:39,939 INFO    gammad.tray.keepawake: tray: keep-awake off
+2026-10-28 15:05:47,517 INFO    gammad.config: settings: BROKER<-.env FYERS_APP_ID<-.env FYERS_SECRET_KEY<-.env FYERS_ACCESS_TOKEN<-.env FYERS_REDIRECT_URI<-.env
+2026-10-28 15:05:47,536 ERROR   gammad.config: settings: telegram (client edition): TELEGRAM_GROUP_ID is not set: no group alerts will be sent
+2026-10-28 15:05:47,539 INFO    gammad.tray.supervisor: tray: phone lines to the personal chat: off
+2026-10-28 15:05:48,512 INFO    gammad.tray.supervisor: tray: supervisor pid 11960, port 8760
+2026-10-28 15:05:48,524 INFO    gammad.tray.supervisor: tray: service started, pid 4268: E:\TA Projects\GAMMA-UNWIND-client-0.8.9-win64\python\pythonw.exe -m gammad serve --no-tray
+2026-10-28 15:05:48,527 INFO    gammad.tray.tray: tray: autostart is owner-edition only; skipped (client edition)
+2026-10-28 15:05:51,988 INFO    gammad.tray.supervisor: tray: service running on port 8760
+2026-10-28 15:05:52,014 INFO    gammad.tray.keepawake: tray: keep-awake on
+2026-10-28 15:22:05,761 INFO    gammad.tray.supervisor: tray: service stopped (clean, exit 0, 1.7 s)
+2026-10-28 15:22:05,786 INFO    gammad.tray.stopped_page: tray: stopped page on http://127.0.0.1:8760
+2026-10-28 15:22:05,786 INFO    gammad.tray.keepawake: tray: keep-awake off
+2026-10-28 15:22:07,640 INFO    gammad.tray.stopped_page: tray: stopped page closed
+2026-10-28 16:50:00,168 INFO    gammad.config: settings: BROKER<-.env FYERS_APP_ID<-.env FYERS_SECRET_KEY<-.env FYERS_ACCESS_TOKEN<-.env FYERS_REDIRECT_URI<-.env
+2026-10-28 16:50:00,177 ERROR   gammad.config: settings: telegram (client edition): TELEGRAM_GROUP_ID is not set: no group alerts will be sent
+2026-10-28 16:50:00,179 INFO    gammad.tray.supervisor: tray: phone lines to the personal chat: off
+2026-10-28 16:50:00,959 INFO    gammad.tray.supervisor: tray: supervisor pid 7024, port 8760
+2026-10-28 16:50:00,971 INFO    gammad.tray.supervisor: tray: service started, pid 28268: E:\TA Projects\GAMMA-UNWIND-client-0.8.9-win64\python\pythonw.exe -m gammad serve --no-tray
+2026-10-28 16:50:00,973 INFO    gammad.tray.tray: tray: autostart is owner-edition only; skipped (client edition)
+2026-10-28 16:50:04,318 INFO    gammad.tray.supervisor: tray: service running on port 8760
+2026-10-28 17:03:32,008 INFO    gammad.tray.supervisor: tray: service stopped (clean, exit 0, 0.9 s)
+2026-10-28 17:03:32,023 INFO    gammad.tray.stopped_page: tray: stopped page on http://127.0.0.1:8760
+2026-10-28 17:03:47,861 INFO    gammad.tray.stopped_page: tray: stopped page closed
+2026-10-28 17:28:19,889 INFO    gammad.config: settings: BROKER<-.env FYERS_APP_ID<-.env FYERS_SECRET_KEY<-.env FYERS_ACCESS_TOKEN<-.env FYERS_REDIRECT_URI<-.env
+2026-10-28 17:28:19,900 ERROR   gammad.config: settings: telegram (client edition): TELEGRAM_GROUP_ID is not set: no group alerts will be sent
+2026-10-28 17:28:19,902 INFO    gammad.tray.supervisor: tray: phone lines to the personal chat: off
+2026-10-28 17:28:20,658 INFO    gammad.tray.supervisor: tray: supervisor pid 21736, port 8760
+2026-10-28 17:28:20,669 INFO    gammad.tray.supervisor: tray: service started, pid 20080: E:\TA Projects\GAMMA-UNWIND-client-0.8.9-win64\python\pythonw.exe -m gammad serve --no-tray
+2026-10-28 17:28:20,671 INFO    gammad.tray.tray: tray: autostart is owner-edition only; skipped (client edition)
+2026-10-28 17:28:24,085 INFO    gammad.tray.supervisor: tray: service running on port 8760
+2026-10-28 17:32:08,954 INFO    gammad.tray.supervisor: tray: service stopped (clean, exit 0, 0.7 s)
+2026-10-28 17:32:08,971 INFO    gammad.tray.stopped_page: tray: stopped page on http://127.0.0.1:8760
+2026-10-28 17:32:10,815 INFO    gammad.tray.stopped_page: tray: stopped page closed
+2026-10-30 12:13:48,237 INFO    gammad.config: settings: BROKER<-.env FYERS_APP_ID<-.env FYERS_SECRET_KEY<-.env FYERS_ACCESS_TOKEN<-.env FYERS_REDIRECT_URI<-.env
+2026-10-30 12:13:48,246 ERROR   gammad.config: settings: telegram (client edition): TELEGRAM_GROUP_ID is not set: no group alerts will be sent
+2026-10-30 12:13:48,248 INFO    gammad.tray.supervisor: tray: phone lines to the personal chat: off
+2026-10-30 12:13:49,021 INFO    gammad.tray.supervisor: tray: supervisor pid 16724, port 8760
+2026-10-30 12:13:49,034 INFO    gammad.tray.supervisor: tray: service started, pid 26960: E:\TA Projects\GAMMA-UNWIND-client-0.8.9-win64\python\pythonw.exe -m gammad serve --no-tray
+2026-10-30 12:13:49,036 INFO    gammad.tray.tray: tray: autostart is owner-edition only; skipped (client edition)
+2026-10-30 12:13:52,491 INFO    gammad.tray.supervisor: tray: service running on port 8760
+2026-10-30 12:13:52,510 INFO    gammad.tray.keepawake: tray: keep-awake on
+2026-10-30 13:51:11,723 INFO    gammad.tray.supervisor: tray: service stopped (clean, exit 0, 3.1 s)
+2026-10-30 13:51:11,753 INFO    gammad.tray.keepawake: tray: keep-awake off
