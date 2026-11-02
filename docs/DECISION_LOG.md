@@ -76,3 +76,29 @@ See [Project Status](PROJECT_STATUS.md), [Testing](TESTING_RELEASE_GATES.md) and
 - **Decision:** continue GAMMA implementation within ChatGPT plus user-executed Windows PowerShell 7 verification; **do not use Codex for this project**. Prefer consolidated R1.9 offline implementation and acceptance instead of repeated small releases.
 - A documentation update is not a Runtime update. Preserve the original Word guide, app code, secrets and databases; document and separately rebaseline intentional Markdown-only hash changes before another source-gated stage.
 - **No automatic authorization** for production writes, broker calls, real orders or Telegram external sends. `R10H_APPLY=HOLD`.
+
+## ADR-012 — Implement R1.9 broker-neutral multi-account, configuration loader, and durable watermark core (2026-11-02)
+
+- **Decision:** accepted candidate implementation in `gammad/broker/account.py`, `gammad/broker/config_loader.py`, `gammad/broker/durable_watermark.py`, `gammad/config.py`, and runtime lifecycle integration into `gammad/app.py`.
+- **Scope:**
+  - `AccountIdentity` & `AccountCredentials`: explicit, trusted broker account identity rejecting token leakage, whitespace, or invalid characters, supporting paper/mock/registered brokers, accompanied by structured credential encapsulation.
+  - `AccountSessionManager`: true concurrent multi-broker account registration, active session routing, and independent failure isolation.
+  - `HistoryProviderConfig`: decouples historical market data provider routing and request budgets (`GAMMA_HISTORY_PROVIDER`) from the active paper-monitoring broker.
+  - `Multi-Account Configuration Loader` (`gammad/broker/config_loader.py`):
+    - `Mode A` (Backward-Compatible): automatically synthesizes primary `AccountIdentity` and `AccountCredentials` from legacy single-broker configuration (`cfg.env.broker` and registry credentials) when `GAMMA_ACCOUNTS_JSON` is not set, with paper broker support.
+    - `Mode B` (Multi-Account Configuration): parses structured JSON account list from `GAMMA_ACCOUNTS_JSON` (supporting raw JSON strings or JSON file paths), validates identities, instantiates adapters with case-normalized credential mapping, and registers them with `AccountSessionManager`. Decoupled history provider resolves independent broker adapters from registry.
+  - `Environment Ingestion` (`gammad/config.py`): added `GAMMA_ACCOUNTS_JSON`, `GAMMA_HISTORY_PROVIDER`, `GAMMA_HISTORY_BARS_LIMIT`, `GAMMA_HISTORY_DAILY_BUDGET` to `BASE_ENV_KEYS`, enabling full `.env` file ingestion into `cfg.env.values`.
+  - `WatermarkStore` & `DurableTickQueue`: broker-neutral SQLite WAL durable high-water mark (`synchronous=FULL`), enforcing strictly increasing LTT, rejecting duplicate payloads, and preventing stale tick regressions on restart.
+  - Runtime Integration & Bootstrap:
+    - `serve_async()` bootstraps `AccountSessionManager` and `HistoryProviderConfig` via `config_loader`, defaulting `watermark_ledger_path` to `cfg.paths.data_dir / "watermark.db"`.
+    - `Runtime.broker_entry` dynamically resolves active account's broker entry and capabilities from `session_manager` rather than statically binding `cfg.env.broker`.
+    - `Runtime._registry_feed` dynamically resolves active account's broker entry, credentials, and durable watermark.
+    - `Runtime.adapter()` returns active session adapter across operational and expired states, enabling authentication renewal without masking.
+    - `Runtime.apply_credentials()` and `Runtime.reload_credentials()` target `self.adapter()` and the active token key.
+    - `_make_token_watcher()` gracefully uses active adapter without static broker coupling.
+  - Test Harness & Fixture Leak Resolution:
+    - Added `TestConfigLoader` in `tests/test_r19_broker_neutral.py` covering Mode A, Mode B, file-based JSON configs, real `.env` ingestion, paper broker, invalid config rejection, and history provider decoupling.
+    - Updated `TestRuntimeIntegration` to test dynamic feed resolution, active account switching updating runtime properties, unauthenticated adapter revival, and `serve_async` startup wiring & bootstrap.
+    - Resolved unclosed SQLite database connection leaks across both test suites (including fixture `tearDown` loops and `closing(sqlite3.connect(...))` in lifecycle tests).
+    - 42/42 Windows Python 3.13 tests passed across `tests/test_r19_broker_neutral.py` and `tests/test_r19_runtime_lifecycle.py` with 0 failures, 0 errors, and 0 ResourceWarnings.
+- **Consequence:** core R1.9 multi-account architecture and runtime bootstrap are fully verified in candidate scope. Live broker authorization and order placement remain on **HOLD**. `R10H_APPLY=HOLD`.

@@ -19,9 +19,10 @@
 | E2→E1, paper T1→T2, paused router, disposable SQLite recovery | 244-source final lifecycle report | PASS — bounded |
 | Ambiguous outbox dispatch | Crash claim survives restart; automatic duplicate attempt not made | PASS — bounded; **not** guaranteed delivery |
 | Durable FYERS timestamp watermark | New optional module, Windows Python 3.13, 10/10 tests | PASS — bounded **prototype only** |
-| Default Runtime feed integration and trusted account identity | No connected implementation for 245th module | **HOLD** |
-| Concurrent, isolated authenticated multi-broker sessions and feeds | Requirement confirmed, R1.9 not implemented | **HOLD** |
-| Scheduler → full strategy → router → durable external notifications | Only bounded partial probes | **HOLD** |
+| Trusted account identity & broker-neutral durable watermark | R1.9 candidate (`gammad/broker/account.py`, `durable_watermark.py`, wired into `gammad/app.py`), Windows Python 3.13, 42/42 tests PASS | PASS — bounded actual Runtime integration; live provider authorization **HOLD** |
+| Concurrent, isolated multi-broker sessions & history routing | R1.9 `AccountSessionManager` + `HistoryProviderConfig` candidate (wired into `Runtime.adapter()` and `Runtime.history_adapter()`), 42/42 tests PASS | PASS — bounded candidate |
+| Multi-account config ingestion & runtime startup bootstrap | R1.9 `config_loader.py` (Mode A legacy fallback, Mode B multi-account JSON, decoupled history provider), `gammad/config.py` .env ingestion, `serve_async` startup wiring, dynamic `Runtime.broker_entry` and `_registry_feed` resolution, 42/42 tests PASS | PASS — bounded candidate |
+| Scheduler → full strategy → router → durable external notifications | R1.9 synthetic full lifecycle test: decoupled history backfill -> feed watermark -> V1 signal -> AlertRouter -> paper trade -> T1/T2 lifecycle -> outbox crash-quarantine (`tests/test_r19_runtime_lifecycle.py`, 42/42 PASS) | PASS — bounded synthetic lifecycle; external live transport **HOLD** |
 | Genuine history entitlement, expired contracts and validated 2,000 bars | No accepted live read-only provider evidence | **HOLD** |
 | Production Windows ACL, backup rollback and migration | Disposable SQLite checks only | **HOLD** |
 | Real Telegram receipt/idempotency | Not qualified | **HOLD** |

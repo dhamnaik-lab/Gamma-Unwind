@@ -2,6 +2,18 @@
 
 This records **evidenced** milestones; it is not a claim that every experimental patch was applied to the installed application. Historical events are summarized from the 0.8.9 source snapshot and supplied R5 acceptance reports. See [Project status](docs/PROJECT_STATUS.md) for current PASS/HOLD gates.
 
+## Unreleased — R1.9 broker-neutral multi-account and durable watermark candidate (2026-11-02)
+
+- Added `gammad/broker/account.py`: `AccountIdentity` (trusted account scope, paper/mock broker support, token rejection guard), `AccountCredentials` (structured credential container with dictionary access), `AccountSessionManager` (concurrent multi-broker isolation, dynamic active session switching, failure isolation), and `HistoryProviderConfig` (decoupled historical data routing from trading accounts).
+- Added `gammad/broker/durable_watermark.py`: generalized broker-neutral SQLite WAL durable high-water mark engine (`synchronous=FULL`, busy timeout, multi-account namespace segregation, duplicate and regression rejection).
+- Added `gammad/broker/config_loader.py`: `load_account_session_manager(cfg)` supporting Mode A (backward-compatible legacy single-broker synthesis, paper adapter fallback) and Mode B (structured JSON multi-account ingestion from `GAMMA_ACCOUNTS_JSON`, raw string and JSON file path support), plus decoupled `load_history_provider_config(cfg)` via `GAMMA_HISTORY_PROVIDER`.
+- Updated `gammad/config.py`: added `GAMMA_ACCOUNTS_JSON`, `GAMMA_HISTORY_PROVIDER`, `GAMMA_HISTORY_BARS_LIMIT`, `GAMMA_HISTORY_DAILY_BUDGET` to `BASE_ENV_KEYS`, ensuring `.env` files correctly ingest multi-account configurations into `cfg.env.values`.
+- Wired `gammad/app.py`: `serve_async` instantiates `AccountSessionManager` and `HistoryProviderConfig` with default `watermark_ledger_path = data/watermark.db`; `Runtime.broker_entry` dynamically resolves active account's broker entry and capabilities; `Runtime._registry_feed` dynamically resolves active account broker entry, credentials, and durable watermark; `Runtime.adapter()` reliably returns the active session adapter across operational and expired states to allow authentication healing; `apply_credentials` and `reload_credentials` target the active adapter and token keys; `_make_token_watcher` gracefully uses active adapter without static broker coupling.
+- Expanded `tests/test_r19_broker_neutral.py` and `tests/test_r19_runtime_lifecycle.py`: 42 unit & integration tests for Windows Python 3.13 passing **42/42 tests** with 0 errors, 0 failures, and 0 ResourceWarnings. Resolved unclosed SQLite database connection leaks across both test suites (including `closing(sqlite3.connect(...))` in lifecycle tests).
+- Qualified synthetic full lifecycle: decoupled historical backfill, DurableWatermark LTT progression and regression rejection, V1 signal generation, AlertRouter dispatch, paper position lifecycle (T1 entry -> T2 exit), and outbox crash-quarantine.
+- Preserved installed 0.8.9 application source defaults.
+- **Release status unchanged:** `R10H_APPLY=HOLD`; zero live orders, zero live broker calls.
+
 ## Unreleased — accepted bounded qualification and documentation refresh (2026-11-02)
 
 - Verified the R3 installed-source snapshot of **237 files** (ZIP SHA-256 `6AFF21F16381ADA2CDEBD0E706CC03FEA642E4BB262E2BE1FAD233A8D538897D`), superseding earlier R2 counts as the current pre-R1.8 installed source authority.

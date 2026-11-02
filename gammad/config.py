@@ -724,6 +724,10 @@ BASE_ENV_KEYS: tuple[str, ...] = (
     "GAMMA_TZ",
     "GAMMA_LAN",  # T-129: 0/1, the LAN bind (gammad/api/lan.py); NOT in the client .env.example (L5), the guide has it
     "GAMMA_LAN_PASSWORD",  # T-129: the dashboard login for any remote request (LAN or a proxy, D133)
+    "GAMMA_ACCOUNTS_JSON",  # R1.9: multi-account structured JSON configuration
+    "GAMMA_HISTORY_PROVIDER",  # R1.9: decoupled historical data provider
+    "GAMMA_HISTORY_BARS_LIMIT",  # R1.9: daily bars query limit
+    "GAMMA_HISTORY_DAILY_BUDGET",  # R1.9: daily historical request budget
 )
 LAN_ON_VALUES = frozenset({"1", "true", "yes", "on"})
 SOURCE_ENV_FILE = ".env"

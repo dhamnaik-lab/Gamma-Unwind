@@ -6,12 +6,12 @@
 |---|---|---|---|
 | G-R18-01 | Actual Runtime constructor/lifecycle | **BOUNDED PASS** on 244-source disposable candidate; not installed | Full integrated release qualification remains separate |
 | G-R18-02 | Persistent outbox crash safety | **BOUNDED PASS** for ambiguous-claim quarantine, not guaranteed delivery | External receipt/manual reconciliation/idempotency |
-| G-R18-03 | V1-to-paper-position lifecycle | **BOUNDED PASS** E2/E1 and T1/T2, but **full scheduler-to-notification HOLD** | Integrated nonzero full baseline/candidate parity |
-| G-R18-04 | Feed restart stale-tick regression | **REPRODUCED** in unguarded feed; optional 245th module **10/10 bounded PASS**, default factory **HOLD** | Trusted account binding and integrated Runtime restart, queue/backpressure, stale/missing LTT qualification |
+| G-R18-03 | V1-to-paper-position lifecycle | **BOUNDED PASS** for full synthetic V1 lifecycle (signal -> trade_hook -> T1 -> T2 -> exit) in `tests/test_r19_runtime_lifecycle.py` | Full live market data & external Telegram receipt remain **HOLD** |
+| G-R18-04 | Feed restart stale-tick regression | **BOUNDED PASS**; broker-neutral candidate wired into `gammad/app.py` feed hook via `DurableTickQueue`, **24/24 bounded PASS** | Live market provider streaming qualification and backpressure testing |
 | G-R18-05 | Expired-contract/history entitlement and 2,000 bars | **HOLD** | Approved rights-backed read-only provider data-quality certification |
 | G-R18-06 | Production ledger ACL/rollback | **HOLD**; disposable backup/transaction rollback bounded PASS | Windows ACL, tamper/backup-rollback, secure migration and recovery |
-| G-R19-01 | Concurrent independent multi-broker accounts | **HOLD — NOT IMPLEMENTED** | Broker-neutral account identity, session routing, failure containment, per-account feeds |
-| G-R19-02 | Historical-data provider independence | **HOLD — NOT QUALIFIED** | Per-provider capabilities, rights, instrument identity and feed/history source selection |
+| G-R19-01 | Concurrent independent multi-broker accounts | **BOUNDED PASS** in R1.9 candidate (`gammad/broker/account.py`, wired into `Runtime.adapter()`) | Production live multi-broker credential provisioning |
+| G-R19-02 | Historical-data provider independence | **BOUNDED PASS** in R1.9 candidate (`HistoryProviderConfig`, wired into `Runtime.history_adapter()`) | Provider data contract validation and rate-budget enforcement |
 | G-R18-07 | Real Telegram follow-ups and reconciliation | **HOLD** | Controlled external transport evidence and safe ambiguous retry/reconcile policy |
 | G-AUTH-01 | Broker catalog vs verified adapters | **HOLD** (registered ≠ live-qualified) | Each adapter's authenticated feed/history capability test |
 | G-OPS-01 | FYERS account availability | **USER-REPORTED UNAVAILABLE** due to inactivity | Continue offline without FYERS; account restoration separate from development |

@@ -921,6 +921,9 @@ class Runtime:
         reload_settings: Callable[[], Settings] | None = None,
         v1r: Any = None,
         scanners_089: bool = False,
+        session_manager: Any = None,
+        watermark_ledger_path: Path | None = None,
+        history_config: Any = None,
     ) -> None:
         from gammad.alerts.router import AlertRouter
 
@@ -929,6 +932,11 @@ class Runtime:
         self.s089 = None
         self.v1r = v1r
         self.v1desk = V1Desk(self, v1r) if v1r is not None and not scanners_089 else None
+        self.session_manager = session_manager
+        self.watermark_ledger_path = watermark_ledger_path or (
+            cfg.paths.data_dir / "watermark.db" if session_manager is not None else None
+        )
+        self._history_config = history_config
         self.version = __version__
         self.spec_version = cfg.spec_version
         self.db_path: Path = cfg.paths.db_path
@@ -937,7 +945,7 @@ class Runtime:
         self.stop_file: Path = cfg.paths.data_dir / STOP_FILE_NAME
         # X1/R1: the registry-resolved broker (None = client without BROKER, or a broken entry: scanner idle)
         self.broker_problem: str | None = None
-        self.broker_entry: BrokerEntry | None = self._resolve_broker(cfg)
+        self._broker_entry: BrokerEntry | None = self._resolve_broker(cfg)
         self._adapter = adapter
         self._adapter_factory = adapter_factory
         self._feed_factory = feed_factory or self._registry_feed
@@ -1189,17 +1197,49 @@ class Runtime:
         refuses (client without BROKER, unknown / broken broker): the API still comes up to say so."""
         from gammad.broker import registry
 
+        broker_name = cfg.env.broker or None
+        if not broker_name and getattr(self, "session_manager", None) is not None:
+            active = self.session_manager.active_account()
+            if active is not None:
+                broker_name = active.identity.broker
         try:
-            return registry.resolve(cfg.env.broker or None)
+            return registry.resolve(broker_name)
         except LookupError as exc:  # RegistryError
             self.broker_problem = str(exc)
             log.error("broker: %s -- no feed and no scanner until it is fixed", exc)
             return None
 
+    @property
+    def broker_entry(self) -> BrokerEntry | None:
+        if getattr(self, "session_manager", None) is not None:
+            active = self.session_manager.active_account()
+            if active is not None:
+                from gammad.broker import registry
+
+                try:
+                    return registry.get(active.identity.broker)
+                except Exception:
+                    pass
+        return self._broker_entry
+
+    @broker_entry.setter
+    def broker_entry(self, entry: BrokerEntry | None) -> None:
+        self._broker_entry = entry
+
     def broker_creds(self) -> dict[str, str]:
         """{env key: value} of the broker entry's keys (D54-resolved settings). For Dhan the EnvCfg fields
         win: they are what apply_credentials / the legacy token path update. Values are secrets."""
         entry = self.broker_entry
+        if getattr(self, "session_manager", None) is not None:
+            active = self.session_manager.active_account()
+            if active is not None:
+                from gammad.broker import registry
+
+                creds = dict(active.credentials or {})
+                if entry is not None:
+                    merged = {**dict(self.cfg.env.values), **creds}
+                    return registry.creds_from_env(entry, merged)
+                return creds
         if entry is None:
             return {}
         from gammad.broker import registry
@@ -1251,12 +1291,37 @@ class Runtime:
         without it)."""
         del cfg  # the creds come from broker_creds() (the settings the runtime holds now)
         entry = self.broker_entry
+        creds = self.broker_creds()
+        active = None
+        if getattr(self, "session_manager", None) is not None:
+            active = self.session_manager.active_account()
+
         if entry is None:
             raise BrokerAuthError(self.broker_problem or "no broker configured (BROKER)")
-        feed: FeedLike = entry.make_feed(self.broker_creds(), queue, on_auth_error, adapter=self.adapter())
+
+        # R1.9: Attach durable watermark queue gate if session_manager & ledger configured
+        feed_queue = queue
+        if active is not None and getattr(self, "watermark_ledger_path", None) is not None:
+            from gammad.broker.durable_watermark import WatermarkStore, wrap_feed_queue
+
+            try:
+                store = WatermarkStore(
+                    self.watermark_ledger_path,
+                    broker=active.identity.broker,
+                    account_scope=active.identity.account_id,
+                )
+                feed_queue = wrap_feed_queue(queue, store)
+            except Exception as exc:  # noqa: BLE001
+                log.warning("durable watermark unavailable: %s; falling back to direct queue", exc)
+
+        feed: FeedLike = entry.make_feed(creds, feed_queue, on_auth_error, adapter=self.adapter())
         return feed
 
     def adapter(self) -> BrokerAdapter | None:
+        if getattr(self, "session_manager", None) is not None:
+            active = self.session_manager.active_account()
+            if active is not None and active.adapter is not None:
+                return active.adapter
         if self._adapter is None:
             factory = self._adapter_factory
             if factory is None:
@@ -1278,6 +1343,24 @@ class Runtime:
                 self._warn_once("adapter", "broker adapter unavailable: %s: %s", type(exc).__name__, exc)
                 return None
         return self._adapter
+
+    def history_adapter(self, provider_name: str | None = None) -> BrokerAdapter | None:
+        """R1.9: Historical data adapter, decoupled from active execution broker."""
+        if getattr(self, "session_manager", None) is not None:
+            try:
+                return self.session_manager.history_adapter(provider_name)
+            except Exception:  # noqa: BLE001
+                pass
+        return self.adapter()
+
+    def history_config(self, provider_name: str | None = None) -> Any:
+        """R1.9: Historical data configuration, decoupled from active execution broker."""
+        if getattr(self, "session_manager", None) is not None:
+            try:
+                return self.session_manager.history_config(provider_name)
+            except Exception:  # noqa: BLE001
+                pass
+        return getattr(self, "_history_config", None)
 
     def require_adapter(self) -> BrokerAdapter:
         a = self.adapter()
@@ -5261,7 +5344,7 @@ class Runtime:
             client_id, token = creds, access_token or ""
             self.cfg = replace(self.cfg, env=replace(self.cfg.env, dhan_client_id=client_id,
                                                      dhan_access_token=token))  # fmt: skip
-            adapter = self._adapter
+            adapter = self.adapter()
             if adapter is not None and hasattr(adapter, "set_token"):
                 adapter.set_token(token)
             if self.feed is not None:
@@ -5416,13 +5499,32 @@ class Runtime:
                 dhan_access_token=new.get("DHAN_ACCESS_TOKEN") or env.dhan_access_token,
             ),
         )
-        full = self.broker_creds() or new  # the entry's whole key set, updated
-        adapter = self._adapter
+        full = self.broker_creds()
+        if not full:
+            full = new
+        else:
+            full = {**full, **new}
+        if getattr(self, "session_manager", None) is not None:
+            active = self.session_manager.active_account()
+            if active is not None:
+                active.credentials = dict(full)
+        adapter = self.adapter()
         if adapter is not None:
             if hasattr(adapter, "set_credentials"):
                 adapter.set_credentials(full)
-            elif hasattr(adapter, "set_token") and self.broker_entry is not None:
-                adapter.set_token(full.get(self.broker_entry.token_key, ""))
+            elif hasattr(adapter, "set_token"):
+                entry = self.broker_entry
+                if getattr(self, "session_manager", None) is not None:
+                    active = self.session_manager.active_account()
+                    if active is not None:
+                        from gammad.broker import registry
+
+                        try:
+                            entry = registry.get(active.identity.broker)
+                        except Exception:
+                            pass
+                tok_key = entry.token_key if entry is not None else "TOKEN"
+                adapter.set_token(full.get(tok_key, ""))
         if self.feed is not None:
             self.feed.reload_credentials(full)
 
@@ -5558,13 +5660,19 @@ class Runtime:
         """Re-read settings (.env) and hand the new token to the adapter and the live feed."""
         fresh = self._reload_env()
         self.cfg = replace(self.cfg, env=fresh.env)
-        adapter = self._adapter
-        if self.broker_entry is not None:  # the registry path: the whole creds mapping (feed_protocol.Feed)
+        adapter = self.adapter()
+        entry = self.broker_entry
+        if entry is not None:  # the registry path: the whole creds mapping (feed_protocol.Feed)
             creds = self.broker_creds()
+            if getattr(self, "session_manager", None) is not None:
+                active = self.session_manager.active_account()
+                if active is not None:
+                    active.credentials = dict(creds)
             if adapter is not None and hasattr(adapter, "set_credentials"):
                 adapter.set_credentials(creds)
             elif adapter is not None and hasattr(adapter, "set_token"):
-                adapter.set_token(creds.get(self.broker_entry.token_key, ""))
+                tok_key = entry.token_key if entry is not None else "TOKEN"
+                adapter.set_token(creds.get(tok_key, ""))
             if self.feed is not None:
                 self.feed.reload_credentials(creds)
         else:
@@ -6040,6 +6148,7 @@ def _make_token_watcher(runtime: Runtime, cfg: Settings) -> Any:
         log.warning("gammad.auth.token_watch unavailable: token watch off, runtime checks the token once")
         return None
     entry = runtime.broker_entry
+    creds = runtime.broker_creds()
     if entry is None:  # client without BROKER / a broken entry: nothing to probe; POST /api/token answers 501
         log.warning("token watch off: %s", runtime.broker_problem or "no broker configured")
         return None
@@ -6052,7 +6161,7 @@ def _make_token_watcher(runtime: Runtime, cfg: Settings) -> Any:
                     runtime._feed_problem() or "credentials")  # fmt: skip
     watcher = TokenWatcher(
         adapter, runtime.conn, runtime.router, cfg, on_credentials_changed=runtime.apply_credentials,
-        entry=entry, creds=runtime.broker_creds(), adapter_source=runtime.adapter,
+        entry=entry, creds=creds, adapter_source=runtime.adapter,
     )  # fmt: skip
     watcher.attach(runtime)
     return watcher
@@ -6061,10 +6170,22 @@ def _make_token_watcher(runtime: Runtime, cfg: Settings) -> Any:
 async def serve_async(*, tray: bool = True, cfg: Settings | None = None) -> int:
     from gammad.api import lan
     from gammad.api import server as api_server
+    from gammad.broker.config_loader import load_account_session_manager, load_history_provider_config
     from gammad.config import settings
 
     cfg = cfg or settings()
-    runtime = Runtime(cfg, telegram=_make_telegram(cfg), v1r=load_v1r(), scanners_089=True)
+    session_manager = load_account_session_manager(cfg)
+    history_cfg = load_history_provider_config(cfg)
+    watermark_ledger_path = cfg.paths.data_dir / "watermark.db"
+    runtime = Runtime(
+        cfg,
+        telegram=_make_telegram(cfg),
+        v1r=load_v1r(),
+        scanners_089=True,
+        session_manager=session_manager,
+        watermark_ledger_path=watermark_ledger_path,
+        history_config=history_cfg,
+    )
     app = api_server.create_app(runtime)
     # W16 S2 (T-129, B1): loopback, plus this PC's RFC1918 address ONLY when GAMMA_LAN is on AND a password is set
     # (bind_hosts logs the single ERROR for GAMMA_LAN without a password; it never returns 0.0.0.0)
