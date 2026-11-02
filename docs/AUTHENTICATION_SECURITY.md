@@ -1,5 +1,9 @@
 # Authentication, session security and data boundaries
 
+## November 2026 account authority requirement
+
+A login URL, App ID, access token or currently selected broker name is **not sufficient** to establish a stable authorized broker/account identity for durable market-data state. The accepted 245-file watermark prototype requires an explicit trusted per-account scope, but **default Runtime binding remains HOLD**. R1.9 must enforce concurrent-account isolation, exact broker and account revisions, token privacy and expiry, safe switching, independent authorized market-data provider selection and refusal on ambiguous identity. No real credentials or live calls are authorized by the documentation update. See [checkpoint](R18_EVIDENCE_AND_R19_HANDOFF.md).
+
 **Scope:** installed `gammad/auth/oauth.py`, `token_watch.py`, broker auth modules and `gammad/api/server.py`. This is a security reference, not a request to use real credentials.
 
 ## Authentication and token lifecycle

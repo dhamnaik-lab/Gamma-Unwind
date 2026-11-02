@@ -1,93 +1,49 @@
 # GAMMA-UNWIND
 
-**NSE F&O options monitoring, open-interest unwind signals, and paper-trade tracking — with a local dashboard.**
+**Windows client · installed baseline 0.8.9 · documentation updated 2026-11-02**
 
-**Repository baseline:** `0.8.9` (see [VERSION](VERSION))  
-**Primary audience:** Indian-market traders and developers evaluating a signal-monitoring workflow  
-**Status:** Development / controlled validation. **Not approved for unattended live trading or order execution.**
+GAMMA-UNWIND is a locally operated NSE F&O options scanner. It builds support/resistance-driven watchlists, observes option price/volume/open-interest activity, evaluates configured signal rules, and exposes a browser dashboard with optional Telegram alerts and follow-ups. It is **not an order-placement system**. Alerts are informational; paper-position tracking is not broker execution.
 
-GAMMA-UNWIND monitors Indian stock-option contracts around support and resistance zones. It combines daily market structure with option-chain selection, intraday open interest (OI), volume, premium movement, and price action to identify potential setups. The application provides a local dashboard, optional Telegram alerts, and simulated trade lifecycle tracking.
+> **Release boundary (2 November 2026):** R1.8 bounded offline qualifications passed through the optional 245-file watermark prototype, but none of those changes is installed. R1.9 multi-broker integration is the next **planned** development stage and is not yet implemented. Real provider entitlement, full scheduler/notification delivery, trusted per-account routing, ACL and release readiness remain HOLD. **R10H Apply = HOLD.**
 
-> **Safety:** Alerts and virtual trade results are informational, not investment advice. The packaged client described in [README.txt](README.txt) does **not** place broker orders. Broker credentials must never be committed to GitHub. A successful offline test does not establish live broker compatibility, strategy profitability, or production readiness.
+## Quick start (installed Windows client)
 
-## What it does
+1. Review [Installation & Operations](docs/INSTALLATION_OPERATIONS.md) and the preserved [`docs/GAMMA-UNWIND-Setup-Guide.docx`](docs/GAMMA-UNWIND-Setup-Guide.docx).
+2. Open `Check Setup.cmd`; inspect actual broker readiness, not just a configured login URL.
+3. Start with `Start GAMMA.cmd`, then use the local dashboard (the bundled 0.8.9 guide documents `http://127.0.0.1:8760`). Do not expose the dashboard to the public internet.
+4. Confirm broker authorization, freshness, subscriptions and daily jobs in status before treating any signal as live-qualified.
+5. Stop with the project's supported `Stop GAMMA.cmd` path. Do not terminate or restart during stateful testing without a documented recovery procedure.
 
-- **Market structure:** Builds daily support/resistance zones for the NSE F&O stock universe using historical candles and a configurable lookback.
-- **Options watchlists:** Selects eligible out-of-the-money CE/PE contracts near relevant zones, with open-interest and liquidity filters.
-- **Intraday monitoring:** Processes market data and evaluates OI unwind, volume build-up, consolidation, breakout, and underlying-stock context.
-- **Signal controls:** Uses strategy gates, completed-bar evaluation where specified, de-duplication, and explicit handling of missing or stale data.
-- **Paper trade tracking:** Records simulated entries, stops, targets, trailing logic, follow-up events, and exits; it is not a broker order-management system.
-- **Local dashboard and notifications:** Displays levels, watchlists, signals, feed status, trade events, and operational checks; can send Telegram alerts when configured.
-- **Operational tools:** Includes broker setup checks, token management, scheduled jobs, local logs, and a persistent SQLite store.
+The running application's actual endpoints/settings remain authoritative over examples in this documentation. Never add raw access tokens, broker secrets, local session stores or customer/account data to these Markdown files.
 
-The exact strategy behavior is defined by the code and [config/strategy.yaml](config/strategy.yaml), not by performance claims in this README. No win rate, expected return, or profitability is asserted.
+## Documentation index
 
-## Architecture at a glance
+| Area | Guide |
+|---|---|
+| Installed vs candidate status, known holds | [Project status](docs/PROJECT_STATUS.md) |
+| Accepted R1.8 evidence and R1.9 multi-broker handoff | [Checkpoint — 2 November 2026](docs/R18_EVIDENCE_AND_R19_HANDOFF.md) |
+| Version and changes | [Changelog](CHANGELOG.md) |
+| Components and lifecycle | [Architecture](docs/ARCHITECTURE.md) |
+| Broker selection and capabilities | [Broker Manager](docs/BROKER_MANAGER.md) |
+| Browser login, tokens and boundaries | [Authentication & Security](docs/AUTHENTICATION_SECURITY.md) |
+| History, expiries, request budgets | [Historical Data](docs/HISTORICAL_DATA.md) |
+| E2/E1, closed bars and trade states | [V1 Strategy Engine](docs/V1_STRATEGY_ENGINE.md) |
+| Subscriptions, reconnect and stale data | [Live Feed & Recovery](docs/LIVE_FEED_RECOVERY.md) |
+| Tests, hashes, release controls | [Testing & Release Gates](docs/TESTING_RELEASE_GATES.md) |
+| Verified source ZIPs, restoration | [Source Snapshot & Recovery](docs/SOURCE_SNAPSHOT_RECOVERY.md) |
+| Current limitations | [Known Issues](docs/KNOWN_ISSUES.md) |
+| Operations | [Installation & Operations](docs/INSTALLATION_OPERATIONS.md) |
+| Paper monitoring (no orders) | [Paper Trading](docs/PAPER_TRADING.md) |
+| Verified route inventory | [API Reference](docs/API_REFERENCE.md) |
+| Important decisions | [Decision Log](docs/DECISION_LOG.md) |
 
-| Area | Key files / directories |
-| --- | --- |
-| Supervisor, scheduling, and feed orchestration | [`gammad/app.py`](gammad/app.py) |
-| Broker registry and capability assessment | [`gammad/broker/`](gammad/broker/) |
-| Support/resistance and watchlist jobs | [`gammad/jobs/`](gammad/jobs/) |
-| Intraday signal engine | [`gammad/watch/`](gammad/watch/) |
-| Virtual trade lifecycle | [`gammad/trade/`](gammad/trade/) |
-| Local dashboard API | [`gammad/api/server.py`](gammad/api/server.py) |
-| SQLite persistence and migration | [`gammad/store/`](gammad/store/) |
-| Strategy parameters | [`config/strategy.yaml`](config/strategy.yaml) |
-| Broker and Telegram configuration template | [`.env.example`](.env.example) |
+## Current source of truth (2 November 2026)
 
-The local API runs on the loopback interface (`127.0.0.1`) rather than being intended as a public Internet service. The default packaged dashboard address documented for this release is **http://127.0.0.1:8760**.
+- **Installed R3 source snapshot (verified):** `Gamma Unwind Source Code 2026-10-31_123418_650_IST_cc136e62.zip`, SHA-256 `6AFF21F16381ADA2CDEBD0E706CC03FEA642E4BB262E2BE1FAD233A8D538897D`; 237 original source/document files with the two internal snapshot metadata entries. This supersedes the older 221-file R2 historical snapshot as the 31 October R3 baseline.
+- **Installed distribution remains 0.8.9; no R1.8 candidate source applied.** Existing 0.8.9 routes, UI and behavior must not be described as R1.8 features merely because synthetic tests passed.
+- **Latest accepted R1.8 watermark evidence:** `GAMMA_R18_WATERMARK_OFFLINE_EVIDENCE.zip` from the 17:20 IST Windows run, SHA-256 `9DE6BC780D9E3B3F175C00DB1B508442F87846C9CDFA11EB27C47C54103ADE2F`. The 245-source disposable candidate SHA-256 is `39C71BFA8F7ABD2C1D4ABBEE8BB1A88F52903E6EDF82A1F86E105E180111A1FE`. The new module is **not connected** to the installed Runtime feed factory.
+- **Development direction:** broker-neutral GAMMA with multiple independent accounts/connections, data providers separate from brokers, no preferred broker, read-only paper monitoring. The user-reported FYERS inactivity does not block synthetic multi-broker development.
 
-## Broker integrations
+See [the exact evidence, gate matrix and remaining work](docs/R18_EVIDENCE_AND_R19_HANDOFF.md).
 
-The 0.8.9 registry declares the following broker names:
-
-**Dhan, Zerodha, Angel One, FYERS, Upstox, Nuvama, Kotak Neo, Groww, Shoonya, and Flattrade.**
-
-**Registered is not the same as live-qualified.** Availability of historical candles, options-chain data, OI, streaming subscriptions, and authentication varies by broker, account, entitlement, and API plan. Several adapters are labeled beta or unverified in the source. The application must refuse unsupported capabilities rather than silently treating them as available.
-
-For the client edition, select a broker explicitly in `.env`. Do not assume that a connected feed or a successful login establishes sufficient historical-data rights or complete strategy coverage.
-
-## Getting started (packaged Windows client)
-
-These steps are for a **complete distributed client ZIP**, which includes its bundled Python runtime. A GitHub source checkout alone may not include that runtime or all packaged assets.
-
-1. Extract the full ZIP into a short folder path on Windows 10/11 (64-bit); do not run it inside the archive.
-2. Copy [`.env.example`](.env.example) to `.env` if necessary. Configure the Telegram settings, `BROKER`, and only the credentials required for your selected broker. Keep `.env` private.
-3. Run **`Check Setup.cmd`** and resolve reported configuration or capability problems.
-4. Run **`Start GAMMA.cmd`**. Use the tray icon to open the local dashboard at **http://127.0.0.1:8760**.
-5. Complete the broker's supported manual/token login flow and check feed, subscription, and data readiness before monitoring.
-6. Quit from the tray when finished; consult [README.txt](README.txt) for packaged-client instructions and troubleshooting.
-
-For developers working from source, the Python command-line interface exposes `python -m gammad --help` and `python -m gammad --version` **after** an appropriate environment and dependencies are provisioned. Do not treat those commands as a complete source-install procedure.
-
-## Configuration and data
-
-- [`config/strategy.yaml`](config/strategy.yaml) holds zone, proximity, expiry, schedule, watcher, and signal-gate parameters.
-- [`.env.example`](.env.example) lists broker-specific and Telegram environment variables; the real `.env` must remain untracked.
-- The application uses a local SQLite database (normally `data/gamma.db`) and versioned migrations in [`gammad/store/schema.sql`](gammad/store/schema.sql).
-- Timestamps and exchange-session scheduling are based on **Asia/Kolkata (IST)**.
-
-Avoid editing the live database or swapping broker configurations during a market session without an explicit backup and controlled validation.
-
-## Validation and release boundaries
-
-Development work includes offline tests, deterministic replay, source-integrity checks, and staged integration qualification. **These are distinct from production approval.**
-
-As of **31 October 2026**, the ongoing R5 / R10H integration work remains subject to release holds for items such as real historical-data entitlement, sufficiently deep official history, full strategy/runtime parity, broker/feed qualification, and protected exit transport. Passing isolated or synthetic tests does **not** clear those holds.
-
-Accordingly:
-
-- Do not enable live orders or assume production readiness from this repository.
-- Treat unsupported market data, stale feeds, missing permissions, and incomplete broker capabilities as blockers.
-- Verify reproducibility, no-lookahead behavior, market-session boundaries, and out-of-sample results before relying on any signal.
-- Keep secrets, access tokens, user data, databases, and internal evidence archives out of commits and issue reports.
-
-## Further reading
-
-- [README.txt](README.txt) — release-specific usage, setup, and troubleshooting.
-- [`.env.example`](.env.example) — supported configuration keys.
-- [`gammad/__main__.py`](gammad/__main__.py) — available CLI commands.
-- [`gammad/edition.py`](gammad/edition.py) — client/owner edition behavior.
-
-**Disclaimer:** This software is for research, monitoring, and paper-trade evaluation. Option trading entails substantial risk; the presence of signals, targets, and simulated P&L is not evidence of profitability.
+**Documentation-only update:** These Markdown changes preserve Python source, executable, credentials, token vaults, database, configuration and the existing Word setup guide. Applying them to the installed tree changes documentation SHA-256 values, so subsequent 237-file source-gated qualification must explicitly rebaseline the approved documentation delta; never silently weaken prior pins.

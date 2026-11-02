@@ -1,29 +1,28 @@
-# Known issues and unresolved release blockers
+# Known issues, gaps and release blockers
 
-**As of 2026-10-31.** “HOLD” means evidence is missing or qualification incomplete; it is not automatically a reproduced defect. Record exact evidence if changing status.
+**Current 2 November 2026 IST.** A HOLD denotes an incomplete qualification; it is not automatically a reproduced bug. Historical issues that are now bounded-PASS are retained below rather than mislabelled as production-fixed.
 
-| ID | Severity / classification | Description | Required evidence to close |
+| ID | Category / severity | Current classification | Required closeout |
 |---|---|---|---|
-| G-R18-01 | Release blocker / HOLD | New 50-file R1.8 candidate has not passed full actual Runtime constructor/lifecycle tests | Source-gated baseline/candidate Windows Runtime, nonzero events and unchanged installed pins |
-| G-R18-02 | Release blocker / HOLD | Protected outbox durable delivery, idempotency and process-crash recovery unqualified | Real schema/router/tracker/outbox replay with controlled crash injection |
-| G-R18-03 | Release blocker / HOLD | Complete E2→E1→router→position→exit→outbox equivalence not demonstrated | Identical genuine nonzero baseline/candidate traces with persistent trade state |
-| G-R18-04 | Release blocker / HOLD | Stale-tick handling across process restart and actual broker feed re-subscriptions unqualified | Fault-injection suite with timestamp, mapping, credentials and restart states |
-| G-R18-05 | Release blocker / HOLD | Real FYERS expired contract and 2,000 official NSE sessions entitlement/availability unverified | Separately approved read-only provider call and data-quality evidence |
-| G-R18-06 | Release blocker / HOLD | Durable ledger uses new SQLite candidate module, but installed Windows private ACL/account scoping and protection against backup rollback are not qualified | Verified explicit provisioning, ACLs, identity, corruption/rollback and Runtime integration |
-| G-AUTH-01 | Qualification gap | Multi-broker availability does not imply ten live-qualified adapters | Provider-by-provider live capability and authenticated feed tests, separately authorized |
-| G-DOC-01 | Documentation discrepancy | Old 0.8.9 plain-language guide describes candle-close alert checks; `ContractEngine.on_tick` supports forming-tick E1 | Reconcile exact engine flags and timing without modifying V1 strategy |
-| G-OPS-01 | Operational gap | Existing source snapshot is an audit of code, not a full restoration of settings/runtime data | Separate private backup/restore procedure with confidentiality controls |
+| G-R18-01 | Actual Runtime constructor/lifecycle | **BOUNDED PASS** on 244-source disposable candidate; not installed | Full integrated release qualification remains separate |
+| G-R18-02 | Persistent outbox crash safety | **BOUNDED PASS** for ambiguous-claim quarantine, not guaranteed delivery | External receipt/manual reconciliation/idempotency |
+| G-R18-03 | V1-to-paper-position lifecycle | **BOUNDED PASS** E2/E1 and T1/T2, but **full scheduler-to-notification HOLD** | Integrated nonzero full baseline/candidate parity |
+| G-R18-04 | Feed restart stale-tick regression | **REPRODUCED** in unguarded feed; optional 245th module **10/10 bounded PASS**, default factory **HOLD** | Trusted account binding and integrated Runtime restart, queue/backpressure, stale/missing LTT qualification |
+| G-R18-05 | Expired-contract/history entitlement and 2,000 bars | **HOLD** | Approved rights-backed read-only provider data-quality certification |
+| G-R18-06 | Production ledger ACL/rollback | **HOLD**; disposable backup/transaction rollback bounded PASS | Windows ACL, tamper/backup-rollback, secure migration and recovery |
+| G-R19-01 | Concurrent independent multi-broker accounts | **HOLD — NOT IMPLEMENTED** | Broker-neutral account identity, session routing, failure containment, per-account feeds |
+| G-R19-02 | Historical-data provider independence | **HOLD — NOT QUALIFIED** | Per-provider capabilities, rights, instrument identity and feed/history source selection |
+| G-R18-07 | Real Telegram follow-ups and reconciliation | **HOLD** | Controlled external transport evidence and safe ambiguous retry/reconcile policy |
+| G-AUTH-01 | Broker catalog vs verified adapters | **HOLD** (registered ≠ live-qualified) | Each adapter's authenticated feed/history capability test |
+| G-OPS-01 | FYERS account availability | **USER-REPORTED UNAVAILABLE** due to inactivity | Continue offline without FYERS; account restoration separate from development |
+| G-RELEASE-01 | Production deployment | **HOLD** | Complete integrated evidence, backup, authorized Apply/Verify/Rollback |
 
-## Historical failures already repaired in the disposable harness
+## Closed investigation / bounded acceptance (not installed deployment)
 
-- Earlier R1.8 loop-lifetime test reused a closed event loop: corrected in qualification harness only.
-- Baseline attempted to import candidate-only history budget module: corrected by explicit baseline/candidate scope handling.
-- First consolidated Windows SQLite test retained an open fixture connection during `TemporaryDirectory` cleanup, causing `WinError 32`: corrected in test harness. **31/31 Windows tests subsequently passed**.
+- Windows `subprocess.Popen` test-guard compatibility fixed in **test-only harness**, allowing 10/10 watermark tests to execute. No broker source modification was required for that harness issue.
+- Duplicate `T1` inserted in a rollback fixture violated `UNIQUE(trade_id, kind)`; test-only fixture corrected, bounded SQLite rollback accepted. This was not proof of an application database defect.
+- The unguarded FYERS feed process-reconstruction timestamp regression is real **within the tested fixture**. The optional durable prototype blocks it in synthetic scope, **not** in the installed Runtime.
 
-These are not evidence of a verified production FYERS feed failure. Retain previous failing evidence, label it superseded and avoid deleting or rewriting it.
+## Decision boundary
 
-## Issue update format
-
-For new issues record: identifier, observed behavior, installed/candidate scope, version, reproduce steps, relevant safe log/error class, source and evidence SHA-256, impact on signals/orders, correction summary, exact tests and final PASS/HOLD. Exclude tokens/account data; no production writes without explicit authorization.
-
-**Current decision: R10H Apply remains HOLD.**
+Keep `R10H_APPLY=HOLD`, `LIVE_BROKER_CALLS=NONE`, `ORDERS=0`. Do not authorize production writes, real broker interactions or external Telegram sends from this document. See [current evidence](R18_EVIDENCE_AND_R19_HANDOFF.md).

@@ -1,5 +1,9 @@
 # Paper trading and signal monitoring — no orders
 
+## November 2026 qualification checkpoint
+
+The source-gated 244-file disposable candidate passed **bounded** actual Runtime E2/E1, T1/T2 paper position transitions, paused-router/outbox and durable ambiguous-event quarantine tests. This **does not** establish full scheduler-to-real-Telegram delivery, exactly-once notifications, installed behavior or real order execution. R1.9 must preserve paper-only operation across multiple independent brokers/accounts without cross-account position leakage. Real orders remain prohibited. See [checkpoint](R18_EVIDENCE_AND_R19_HANDOFF.md).
+
 ## Product contract
 
 GAMMA-UNWIND 0.8.9 is an informational option scanner with trade-like tracking and Telegram follow-ups. Its setup guide explicitly states that the application **does not place, modify or close broker orders**. The project goal includes observing live paper signals without executing orders; this requires verified feed data and accurate shadow-state tracking, not an order API.

@@ -1,46 +1,42 @@
 # Project status and release authority
 
-**Status date:** 2026-10-31 IST · **Development:** paused · **R10H production Apply:** HOLD.
+**Updated 2 November 2026 IST · Installed client 0.8.9 · Development R1.8 bounded PASS, R1.9 planned · R10H Apply HOLD.**
 
-## Three independent authorities
+## Three separate authorities
 
-| Authority | What it proves | What it does not prove |
+| Authority | Evidence | Boundary |
 |---|---|---|
-| **Installed client** | Audited 0.8.9 Windows source captured in the 221-file R2 snapshot | That experimental R5 patches are installed |
-| **Disposable qualification candidate** | Pin-verified, modified sources under offline tests | Live market entitlement, installed behavior or order-safe release |
-| **Evidence archive** | Specific PASS/HOLD assertions and their qualification scope | Anything beyond the assertions/tests it actually records |
+| Installed application | 237/237 original source/document hashes captured by the 31 Oct R3 source snapshot | R1.8 modules/patches **not** installed |
+| Accepted disposable source | 244-file integrated candidate, then a 245-file optional watermark extension | Testing/prototype state, not release or installed state |
+| Windows evidence ZIPs | Actual Runtime, lifecycle and watermark reports with the hashes in [checkpoint](R18_EVIDENCE_AND_R19_HANDOFF.md) | Validates only bounded tests explicitly reported |
 
-The supplied source archive is `Gamma Unwind Source Code 2026-10-31_023834_017_IST_7f5baf5a.zip` with SHA-256 `7408392DDBB5B4E50854D796303328D90A4734654ED5351BB34038583D29BF44`. Its internal manifest has 221 files. `VERSION=0.8.9`, `EDITION=client`. A later R3 snapshot script was installed; it is not evidence that installed source gained R5 candidate changes.
+## Current gate matrix
 
-## Latest R1.8 consolidated offline evidence
-
-- Disposable candidate SHA-256: `0775530887E7900AB986310C7A04C48B8593E9EE90C6B2A100D54F4459AE25F4`.
-- Evidence ZIP SHA-256: `370C943F3F21B6AA9EF18D57A4F9A53FE0DC2C044EC17BD53EA8B71508762A5B`.
-- Accepted previous candidate input SHA-256: `F66186826996B5FB692F5176340F46FE03579481C0E36A43570A5E5FB10E0D05`.
-- Accepted previous evidence input SHA-256: `36F28EB9BAA9DA1A3AD49D9242147EBEED7CE3F5C6A613017C446D3B75A62E68`.
-- 31/31 bounded offline tests PASS; derived 50/50 source member hashes PASS; zero production writes, live broker requests and orders **reported**. Actual Runtime with *new 50-file candidate* explicitly **not retested** in this evidence.
-
-## Gate matrix
-
-| Gate | Verified outcome | Release decision |
+| Gate | Accepted evidence | Status |
 |---|---|---|
-| R1.7 bounded lifecycle | Prior synthetic scheduler/history qualification PASS | Partial only |
-| R1.8 natural E2→E1, duplicate refusal, seven position scenarios | Prior bounded genuine-source replay PASS | Partial only |
-| Router exit holds and SQLite fixture reopened | Bounded source-backed tests PASS | No durable outbox certification |
-| FYERS two-fake-socket reconnect | Fake transport tests PASS | Not real feed restart certification |
-| Durable history budget | New disposable SQLite reservation, concurrency and subprocess restart PASS | Private Windows ACL, rollback resistance and real transport integration HOLD |
-| Full actual Runtime of 50-file candidate | Not executed in accepted consolidated evidence | HOLD |
-| Full E2→E1→router→position→exit→outbox replay | Not certified | HOLD |
-| Durable delivery, idempotency and crash recovery | Not certified | HOLD |
-| Complete stale-tick handling and process-restart re-subscription | Not certified | HOLD |
-| Official NSE 2,000-session completed history | Not obtained and certified | HOLD |
-| Genuine authorized FYERS expired-contract history | Not demonstrated | HOLD |
-| R10H Apply/Verify/Rollback | Not authorized | **HOLD** |
+| Source fingerprint / archive integrity | Installed source 237/237, accepted candidate 244/244, 245-source optional watermark package validated | PASS — source-gated |
+| Actual Runtime constructor / fake FYERS session / token guard | 244-source actual Runtime report | PASS — bounded |
+| E2→E1, paper T1→T2, paused router, disposable SQLite recovery | 244-source final lifecycle report | PASS — bounded |
+| Ambiguous outbox dispatch | Crash claim survives restart; automatic duplicate attempt not made | PASS — bounded; **not** guaranteed delivery |
+| Durable FYERS timestamp watermark | New optional module, Windows Python 3.13, 10/10 tests | PASS — bounded **prototype only** |
+| Default Runtime feed integration and trusted account identity | No connected implementation for 245th module | **HOLD** |
+| Concurrent, isolated authenticated multi-broker sessions and feeds | Requirement confirmed, R1.9 not implemented | **HOLD** |
+| Scheduler → full strategy → router → durable external notifications | Only bounded partial probes | **HOLD** |
+| Genuine history entitlement, expired contracts and validated 2,000 bars | No accepted live read-only provider evidence | **HOLD** |
+| Production Windows ACL, backup rollback and migration | Disposable SQLite checks only | **HOLD** |
+| Real Telegram receipt/idempotency | Not qualified | **HOLD** |
+| R10H production Apply / Verify / Rollback | No release authorization | **HOLD** |
 
-## Next controlled milestone
+## Broker and operating policy
 
-Maintain the pause until work is deliberately resumed. On resumption: acquire exact source-pinned router/outbox/schema/recovery dependencies; qualify the updated 50-file candidate in the actual disposable Runtime; test a durable protected outbox and feed failure/restart cases; preserve untouched baseline V1 traces. Read-only live FYERS history requires **separate authorization** and confirmed entitlement; never infer permission from the presence of a token.
+**No fixed primary/default broker.** Multi-broker and multiple concurrent accounts are mandatory. Historical market-data provider selection must remain independent of the currently selected trading broker. Broker catalog count is not live provider readiness. The user reports their FYERS account is disabled due to inactivity; offline development can continue without live FYERS access. Paper monitoring only; zero real orders.
 
-## Evidence classification language
+## Next stage (not already implemented)
 
-Use **PASS** only for a test actually run and observed; **PASS — bounded** for synthetic/fake/isolated testing; **HOLD** for missing evidence or unqualified production behavior; **NOT APPLIED** for any disposable-only changes. Treat screenshots, a standalone test-suite PASS or a populated UI token field as insufficient to claim live readiness. Link exact evidence filename/hash when changing this document.
+**R1.9:** trusted account identity and permissions; concurrently isolated broker adapters and feed sessions; account-scoped durable watermarks; independent historical-data provider routing; robust restarts/fault injection; one consolidated offline source-gated Windows acceptance. Continue in ChatGPT/PowerShell, not Codex. Real broker tests or R10H Apply require separate approval.
+
+## Earlier acceptance history
+
+The 31 October baseline recorded the R1.8 four-gate candidate (50 sources, 31/31 offline PASS), which preceded later 244/245-file candidates and actual Runtime tests. That historical evidence remains valid **for its own scope**, but is not the latest qualification. The R3 snapshot supersedes the previously documented R2 221-file count as the pre-application installed source authority. Exact archive names and checksums are listed in [R1.8 checkpoint](R18_EVIDENCE_AND_R19_HANDOFF.md).
+
+Use **PASS — bounded**, **HOLD**, and **NOT APPLIED** precisely. An evidence ZIP/fixture PASS does not authorize production, provider calls, live notifications, history entitlement or real orders.

@@ -1,5 +1,9 @@
 # Architecture (source-grounded)
 
+## Development architecture checkpoint — 2 November 2026
+
+Current installed architecture remains 0.8.9. The R1.8 244-file actual Runtime candidate passed bounded offline construction/lifecycle, and an **optional, unwired** 245th persistent FYERS watermark module passed 10/10 synthetic Windows tests. Neither is installed. **R1.9 planned architecture** uses the existing broker registry/profile manager as a foundation for **concurrent broker/account sessions**, trusted broker+account identity, independent historical-data providers, feed-factory wiring, and per-account isolation. No preferred broker and no real-order channel. See [checkpoint](R18_EVIDENCE_AND_R19_HANDOFF.md).
+
 **Authority:** installed 0.8.9 client source snapshot, 2026-10-31. The R1.8 disposable bridge/ledger is **not** part of this installed-source architecture. References below are source paths, not claims that every branch has been live-qualified.
 
 ## Component boundaries

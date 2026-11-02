@@ -1,57 +1,45 @@
 # Testing, provenance and release gates
 
-This is a **release-control document**, not a test result generator. Source references come from the installed 0.8.9 snapshot; R5 evidence comes from uploaded, SHA-256-verified disposable ZIPs. Keep provenance and status separate.
+**Current 2 November 2026.** This is a release-control specification; no successful offline test alone authorizes installed changes or external activity.
 
-## Required stages
+## Accepted bounded evidence (source-gated)
 
-1. **Read-only intake:** hash exact source snapshots, candidate input and evidence files; refuse missing/reparse/unsafe ZIP entries or changed pin inventories.
-2. **Offline source-gated construction:** modify only approved files in a disposable clone, never installed runtime; rehash every staged source member.
-3. **Independent deterministic unit tests:** closed-bar timing, token/session identity, broker isolation, disabled transport, history limits, V1 state, outbox and feed-fault cases.
-4. **Actual disposable Runtime acceptance:** construct both untouched baseline and candidate with the *new* source, compare state, lifecycle, session reuse and nonzero trading traces.
-5. **Data qualification:** licensed entitlement, official calendar and genuine historical 2,000-session coverage without lookahead/gaps.
-6. **Release authorization:** explicit approval for any real network test, and later for production R10H Apply/Verify/Rollback. Never merge these approvals.
+| Stage | Evidence SHA-256 | Result | Limit |
+|---|---|---|---|
+| R3 source baseline | `6AFF21F16381ADA2CDEBD0E706CC03FEA642E4BB262E2BE1FAD233A8D538897D` | 237 original files | Does not contain user database or R1.8 candidate |
+| R1.8 three-gate | `354D967B2927A6F26F6A8006C18E53D26710705E9801E84C1AC61C39ADBA0AE4` | 15/15 offline tests, 244 candidate pins | No live transport/full Runtime in that report |
+| R1.8 actual Runtime | `8EB4AF8F715FFA5D05F6469BE5EF8547F623284A3D0890528B707B27910E0CD4` | Real-source constructor, fake FYERS, paused router | Not full scheduling/delivery |
+| R1.8 final lifecycle | `894ECE7737CB837D43F0A62F51A4C55F1C84178976E70C81713E82150F0FEC9E` | Nonzero E2/E1, T1/T2, ambiguous event, disposable backup/rollback | Recreated unguarded feed accepted stale timestamp |
+| R1.8 optional durable watermark | `9DE6BC780D9E3B3F175C00DB1B508442F87846C9CDFA11EB27C47C54103ADE2F` | 10/10 Windows Python 3.13, 0 failures/errors, 245-source candidate | Not integrated with default feed factory/account trust |
 
-## Evidence inventory — 2026-10-31
+For authoritative candidate ZIP filenames and counts see [R1.8 Evidence Checkpoint](R18_EVIDENCE_AND_R19_HANDOFF.md). Historic four-gate 50-file/31-test results remain an older accepted checkpoint, not the latest source.
 
-| Archive | SHA-256 / result | Authority |
-|---|---|---|
-| Installed source snapshot (`...023834_017_IST_7f5baf5a.zip`) | `7408392DDBB5B4E50854D796303328D90A4734654ED5351BB34038583D29BF44` | 221-file code snapshot; not runtime |
-| R1.8 accepted input candidate | `F66186826996B5FB692F5176340F46FE03579481C0E36A43570A5E5FB10E0D05` | Previous bounded parity acceptance |
-| R1.8 accepted input evidence | `36F28EB9BAA9DA1A3AD49D9242147EBEED7CE3F5C6A613017C446D3B75A62E68` | Prior R1.7/R1.8 bounded PASS/HOLD |
-| Consolidated four-gate candidate | `0775530887E7900AB986310C7A04C48B8593E9EE90C6B2A100D54F4459AE25F4` | 50 source pins; candidate-only ledger/bridge edits |
-| Consolidated four-gate evidence | `370C943F3F21B6AA9EF18D57A4F9A53FE0DC2C044EC17BD53EA8B71508762A5B` | 31/31 offline PASS, explicitly not full actual Runtime retest |
+## R1.9 integrated acceptance obligations
 
-Do not interpret a raw ZIP checksum as evidence that every original provider or release condition passed. It proves integrity of that artifact, not correctness of the claims inside it.
+1. **Source and account authority:** retain exact 237 baseline and 244/245 candidate SHA-256 chain, check unsafe ZIP entries and preserve installed source; approved documentation updates need explicit rebaseline of Markdown-only drift.
+2. **Concurrent broker isolation:** independent account sessions, token revisions, broker selection, subscriptions, history ownership, rate budgets and failure containment; two synthetic brokers plus multiple accounts must demonstrate no leakage.
+3. **Feed watermark integration:** verify the optional SQLite module is bound to stable trusted account identity and correctly connected to actual feed factory; inject restart, stale/duplicate/missing LTT, ledger unavailable, queue full, account switch and transient feed failure.
+4. **Full genuine-source monitor lifecycle:** scheduler/watchlist → history/backfill → V1 E2/E1 → signal/router → paper positions/exit followups → durable outbox. Preserve completed-bar and tick timing and compare untouched baseline/candidate nonzero traces.
+5. **Outbox and real-notification safety:** crash before/after durable claim, ambiguous dispatch reconciliation, idempotency/persistence semantics, and authorized provider receipt validation. A quarantined event must not be confused with guaranteed delivery.
+6. **Provider/history quality:** rights/entitlements, expiry identity, bar completeness, timezones and 2,000-session or 2,000-bar contract as independently specified; no data source may imply rights based merely on OAuth login.
+7. **Windows production safety:** ACL provisioning, ledger migration/rollback resistance, protected backup/restore, no secrets in evidence and approved installer rollback procedures.
+8. **Release control:** real broker calls/Telegram notifications and R10H Apply each require separate explicit approval. Continue paper monitoring only; orders always out of scope.
 
-## Mandatory HOLD conditions
-
-- Missing/changed original source hashes, unsafe archive entries, test skips not authorized, or unreviewed dependencies.
-- Missing session ownership revision, token exposure, wrong broker, unsafe history call or provider rights unclear.
-- No complete 2,000-session official market history, incorrect expiry/series or insufficient data quality.
-- No end-to-end E2→E1→router→position→exit→outbox/restart evidence; zero-signal-only parity is insufficient.
-- Durable budget stored only in memory, unprotected ledger or unqualified crash/rollback recovery.
-- Reconnect/contract mapping stale, live subscriptions absent or fake feed mistaken for real.
-- Missing explicit authorization for real network calls or production deployment.
-
-## Result template
+## Status template
 
 ```text
-SOURCE_SHA256_GATE=PASS|HOLD
+INSTALLED_SOURCE_BASELINE=PASS_237_OF_237|HOLD
+ACCEPTED_R18_CANDIDATE=PASS_245_OF_245|HOLD
+SYNTHETIC_BROKER_ACCOUNTS=PASS|HOLD
+RUNTIME_FEED_WATERMARK_INTEGRATED=PASS|HOLD
+FULL_SCHEDULER_V1_OUTBOX_PARITY=PASS|HOLD
+HISTORY_PROVIDER_ENTITLEMENT_AND_QUALITY=PASS|HOLD
+PRODUCTION_ACL_BACKUP_ROLLBACK=PASS|HOLD
 INSTALLED_WRITES=0
 LIVE_BROKER_REQUESTS=0
 REAL_ORDERS=0
-BASELINE_RUNTIME=PASS|HOLD
-CANDIDATE_RUNTIME=PASS|HOLD
-NONZERO_V1_AND_OUTBOX_PARITY=PASS|HOLD
-FEED_RESTART_RECOVERY=PASS|HOLD
-DURABLE_BUDGET_AND_RESTART=PASS|HOLD
-OFFICIAL_HISTORY_AND_ENTITLEMENT=PASS|HOLD
 R10H_APPLY=HOLD
-EVIDENCE_ZIP_SHA256=<computed value>
+EVIDENCE_ZIP_SHA256=<record_actual_sha256>
 ```
 
-The template is not a filled result. Record precise test names, fixture scope, skipped tests and failure injection. **Do not assert success before the actual runner and evidence both confirm it.**
-
-## Current decision
-
-The accepted four-gate evidence explicitly has `actual_runtime_retested_with_new_candidate=false`; full outbox recovery, full strategy flow, stale-tick restart and FYERS real history remain HOLD. Preserve the R1.8 pause and separate production authorization.
+Do not label tests complete until the report and source hashes are independently checked. A documentation-only promotion changes original source hashes for Markdown: preserve the previous authority and record a new approved revision, never silently relax strict comparisons.

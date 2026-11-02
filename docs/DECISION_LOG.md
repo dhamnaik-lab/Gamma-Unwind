@@ -54,8 +54,25 @@ This log distinguishes **accepted project constraints** from future design propo
 - **Rule:** add 16 Markdown documents; preserve existing installed code, DOCX guide, configuration, database and broker session; refuse overwriting a current Markdown file without separate review.
 - **Consequence:** documentation delivery does not grant authority to enable historical calls, send messages, make trades or perform R10H Apply.
 
-## Proposed next review (not approved)
+## Earlier proposed review (2026-10-31 historical checkpoint)
 
 - Source-pinned, durable protected outbox and crash recovery, full continuous V1 trade-flow parity, stale-tick/process-restart recovery, and actual Windows Runtime qualification of revised R1.8 50-file source. After these gates, request **separate** authorization for genuine read-only provider history.
 
 See [Project Status](PROJECT_STATUS.md), [Testing](TESTING_RELEASE_GATES.md) and [Known Issues](KNOWN_ISSUES.md).
+
+## ADR-009 — True concurrent multi-broker operation (2026-11-02)
+
+- **Decision:** accepted requirement, **implementation R1.9 not yet performed**.
+- Multiple brokers and accounts must connect concurrently with independent sessions, explicit broker/account revision authorization, separate failures, feed/watermark namespaces and no privileged default broker. History providers must be independently selectable and qualified.
+- FYERS is retained as an optional adapter. The user reports FYERS currently disabled due to inactivity; offline synthetic qualification may continue without login.
+
+## ADR-010 — Promote accepted R1.8 evidence without claiming deployment (2026-11-02)
+
+- **Decision:** document accepted 244-source actual Runtime bounded evidence and 245-file optional watermark Windows 10/10 PASS, while keeping default feed wiring, trusted account identity, full scheduler→notifications, genuine market history, production ACL and R10H Apply on HOLD.
+- Quarantining ambiguous outbox sends prevents automatic retries in the tested case but is **not** a delivery guarantee.
+
+## ADR-011 — Implementation workflow and documentation change control (2026-11-02)
+
+- **Decision:** continue GAMMA implementation within ChatGPT plus user-executed Windows PowerShell 7 verification; **do not use Codex for this project**. Prefer consolidated R1.9 offline implementation and acceptance instead of repeated small releases.
+- A documentation update is not a Runtime update. Preserve the original Word guide, app code, secrets and databases; document and separately rebaseline intentional Markdown-only hash changes before another source-gated stage.
+- **No automatic authorization** for production writes, broker calls, real orders or Telegram external sends. `R10H_APPLY=HOLD`.

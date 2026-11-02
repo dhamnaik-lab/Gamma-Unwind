@@ -21,7 +21,7 @@ $runner = '.\scripts\Create-GammaUnwind-SourceSnapshot.ps1'
 
 ## Authority and integrity
 
-The uploaded R2 snapshot `Gamma Unwind Source Code 2026-10-31_023834_017_IST_7f5baf5a.zip` was verified with 221 included SHA-256 source hashes, 222 SHA256SUMS lines (source files plus manifest) and whole-archive hash `7408392DDBB5B4E50854D796303328D90A4734654ED5351BB34038583D29BF44`. That archived snapshotter is **R2**, not the newer installed R3. The user confirmed R3 installation, but a new R3 ZIP and its checksum were not supplied here for independent verification.
+The **R3 snapshot was subsequently supplied and independently verified**: `Gamma Unwind Source Code 2026-10-31_123418_650_IST_cc136e62.zip`, whole-archive SHA-256 `6AFF21F16381ADA2CDEBD0E706CC03FEA642E4BB262E2BE1FAD233A8D538897D`, with **237 original source/document files** plus internal manifest and `SHA256SUMS.txt`. This supersedes R2 as the 31 October pre-R1.8 installed-source authority. The older R2 snapshot `Gamma Unwind Source Code 2026-10-31_023834_017_IST_7f5baf5a.zip` (221 source files, ZIP SHA-256 `7408392DDBB5B4E50854D796303328D90A4734654ED5351BB34038583D29BF44`) remains a valid **historical** checkpoint.
 
 Within R3, the checksum list covers each source entry and the internal JSON manifest. **It cannot include a hash of itself or the complete final ZIP**, which is why the complete ZIP SHA-256 is printed only to the terminal.
 
@@ -35,6 +35,10 @@ Within R3, the checksum list covers each source entry and the internal JSON mani
 ## Archive retention
 
 Keep at least a verified pre-change snapshot and the last accepted audit snapshot. Record ZIP filename, whole SHA-256, captured source count, date/time IST, script revision and acceptance evidence. Do not rename a ZIP and reuse a historical hash without recalculating it.
+
+## Documentation-only rebaseline warning — 2 November 2026
+
+The verified R3 237-file source inventory **includes** `README.md`, `CHANGELOG.md`, and Markdown guides under `docs/`. Installing the 2 November docs refresh changes these hashes intentionally, even though application code is unchanged. Before rerunning an older 237-pin qualification runner, record the approved Markdown-only delta and create a new explicit source authority; otherwise the old strict pins will correctly return HOLD. Preserve the pre-update R3 source snapshot and never alter old hashes silently.
 
 ## Security note
 

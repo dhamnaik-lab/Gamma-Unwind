@@ -2,6 +2,28 @@
 
 This records **evidenced** milestones; it is not a claim that every experimental patch was applied to the installed application. Historical events are summarized from the 0.8.9 source snapshot and supplied R5 acceptance reports. See [Project status](docs/PROJECT_STATUS.md) for current PASS/HOLD gates.
 
+## Unreleased — accepted bounded qualification and documentation refresh (2026-11-02)
+
+- Verified the R3 installed-source snapshot of **237 files** (ZIP SHA-256 `6AFF21F16381ADA2CDEBD0E706CC03FEA642E4BB262E2BE1FAD233A8D538897D`), superseding earlier R2 counts as the current pre-R1.8 installed source authority.
+- Accepted R1.8 three-gate offline evidence (**15/15 tests**) for V1 paper flow, persistent outbox claim/quarantine and synthetic stale-feed handling; source manifest **244/244**. This remains disposable, not installed.
+- Accepted bounded **actual Runtime constructor** evidence for the 244-source candidate: synthetic token watcher/FYERS session, paused router guard and ambiguous trade event after Runtime reconstruction.
+- Accepted bounded **final Runtime lifecycle** evidence for nonzero E2/E1, paper T1/T2 transitions, paused notification outbox, crash/quarantine and disposable SQLite backup/rollback. The evidence also **reproduced an older timestamp being accepted after rebuilding the unguarded feed**.
+- Added the optional **durable FYERS watermark prototype** to the 244-source candidate, producing **245 disposable files**. The Windows Python 3.13 source-gated test suite passed **10/10, no errors** after test-only `subprocess.Popen` compatibility correction. This module is **not wired into the default Runtime/broker factory**; trusted account identity and production ledger protections remain HOLD.
+- Confirmed **multi-broker concurrent operation is mandatory** and **no broker is preferred**. FYERS currently unavailable according to the user, so offline development will not depend on its login. R1.9 multi-broker architecture/integration is **planned**, not delivered. Work continues in ChatGPT with Windows PowerShell verification; Codex is not part of this project's workflow.
+- Updated Markdown documentation and added a dated evidence/checkpoint guide. The preserved setup-guide DOCX and installed application sources are not changed by the update package.
+- **Release decision unchanged:** `R10H_APPLY=HOLD`; no real orders, live broker calls or installed-source writes reported by acceptance evidence.
+
+### Evidence for this update
+
+| Artifact | SHA-256 |
+|---|---|
+| 244-source actual Runtime evidence | `8EB4AF8F715FFA5D05F6469BE5EF8547F623284A3D0890528B707B27910E0CD4` |
+| Final lifecycle evidence | `894ECE7737CB837D43F0A62F51A4C55F1C84178976E70C81713E82150F0FEC9E` |
+| Optional 245-source watermark candidate | `39C71BFA8F7ABD2C1D4ABBEE8BB1A88F52903E6EDF82A1F86E105E180111A1FE` |
+| Windows watermark evidence | `9DE6BC780D9E3B3F175C00DB1B508442F87846C9CDFA11EB27C47C54103ADE2F` |
+
+The 31 October sections below are **historical checkpoints** and are retained to avoid rewriting earlier results as current installed functionality.
+
 ## Unreleased — documentation baseline (2026-10-31)
 
 - Created 16 Markdown documents covering architecture, broker management, authentication, historical data, V1 signals, feed recovery, operations, paper monitoring, API boundaries, testing, snapshots, issues and decisions.

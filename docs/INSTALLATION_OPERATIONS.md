@@ -1,5 +1,9 @@
 # Installation, daily operations and troubleshooting
 
+## November 2026 operations and change-control notice
+
+Installed GAMMA 0.8.9 remains unchanged by the accepted R1.8 development evidence. The user's FYERS account is reportedly unavailable due to inactivity; do not attempt unauthorized broker calls or infer session validity from saved configuration. R1.9 multi-broker integration is planned, **not available in this installed client**. This documentation-only update must not enable feeds, Telegram or real orders. Applying updated Markdown changes source snapshot hashes and requires a documented documentation-only rebaseline before subsequent strict source-gated tests. The Word setup guide is preserved byte-for-byte. See [checkpoint](R18_EVIDENCE_AND_R19_HANDOFF.md).
+
 **Installed source:** Windows `Start GAMMA.cmd`, `Stop GAMMA.cmd`, `Update GAMMA.cmd`, `Check Setup.cmd`, `run_gamma.pyw`; `gammad/app.py`, `gammad/install.py`, `gammad/tray/` and `gammad/jobs/readiness.py`. Full user instructions remain in the preserved `GAMMA-UNWIND-Setup-Guide.docx` (0.8.9).
 
 ## Windows client location

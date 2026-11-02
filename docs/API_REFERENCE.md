@@ -1,5 +1,9 @@
 # API route inventory (installed source 0.8.9)
 
+## November 2026 applicability note
+
+This inventory describes **installed 0.8.9 routes only**, not new R1.8/R1.9 multi-account APIs. The accepted optional watermark is not integrated into Runtime or published as an API route. Do not infer concurrent broker-account routing or independent provider-selection endpoints from planned R1.9 architecture. All route changes require separate source review, security/authorization and offline tests. See [checkpoint](R18_EVIDENCE_AND_R19_HANDOFF.md).
+
 **Authority:** routes declared in `gammad/api/server.py` in the 2026-10-31 installed-source snapshot. This is an inventory, **not** a complete OpenAPI schema or permission audit. Return models, query options, authentication/edition guards and statuses must be checked against the exact handler before implementing an API client.
 
 ## Broker and login

@@ -1,5 +1,9 @@
 # V1 strategy engine: verified mechanics and parity boundaries
 
+## November 2026 parity checkpoint
+
+The accepted R1.8 **disposable** actual Runtime final-lifecycle evidence exercises nonzero E2/E1 and paper T1/T2 transitions. It is **bounded**, not a full baseline/candidate scheduler-to-alert parity certification. Continue preserving the installed contract: E2 is evaluated from closed bars, while actual E1 may arise on a forming-bar tick after the completed-bar setup. Do **not** silently redefine E1 as closed-bar-only, alter stops/targets or label a synthetic signal replay as full non-repaint proof. See [checkpoint](R18_EVIDENCE_AND_R19_HANDOFF.md).
+
 **Source authority:** installed `gammad/watch/engine.py`, `gammad/v1/entry.py`, `states.py`, `position.py`, `stops.py`, `exits.py`, `gammad/trade/tracker.py`. Also consult the original setup guide, which describes the scanner in plain words but not every implementation branch.
 
 ## Signal state model

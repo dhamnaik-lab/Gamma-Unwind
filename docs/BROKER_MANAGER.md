@@ -1,5 +1,9 @@
 # Broker Manager, registry and switching
 
+## November 2026 design decision — mandatory multi-broker
+
+The installed 0.8.9 registry/profile UI does **not** constitute a fully concurrent, account-scoped broker Runtime. **R1.9 is planned, not implemented.** Require multiple accounts per broker and multiple simultaneously connected brokers, explicit broker+account authorization, per-account token/session/feed isolation and revision checks. No hard-coded/default broker; independently select qualified live and historical providers. The user reports FYERS currently disabled due to inactivity; it is one optional adapter and must not block offline development. The 245-file optional watermark requires a trusted stable account identity and is **not** in the default factory. See [accepted checkpoint](R18_EVIDENCE_AND_R19_HANDOFF.md).
+
 **Source:** `gammad/broker/registry.py`, `gammad/broker/capabilities.py`, `gammad/api/server.py`, `gammad/api/broker_selection.py`, provider `auth.py` and `adapter.py` modules.
 
 ## Registry versus live qualification

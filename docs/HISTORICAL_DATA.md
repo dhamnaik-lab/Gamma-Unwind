@@ -1,5 +1,9 @@
 # Historical market-data integration
 
+## November 2026 current qualification and provider independence
+
+Synthetic request-budget/session tests and partial Runtime history bridge checks have passed, but **genuine provider entitlement, expired-option history and complete valid 2,000-bar/2,000-session coverage remain HOLD**. The user reports the FYERS account is currently disabled due to inactivity. R1.9 must **not depend on FYERS** or silently substitute a preferred data provider; history may come from an independently authorized and quality-certified provider. Provider-selection rights, instrument/expiry mapping, rate limits, continuity, timestamp provenance and calendar rules must be verified before any live usage. See [checkpoint](R18_EVIDENCE_AND_R19_HANDOFF.md).
+
 **Status:** R5/R1.8 development **disposable and HOLD for live use**. Installed 0.8.9 has broker adapters, daily/5-minute time-series consumers and warmup/backfill logic. The later SDK-free FYERS read-only history acquisition component is candidate code, not proof of live entitlement.
 
 ## Purpose and data contract
