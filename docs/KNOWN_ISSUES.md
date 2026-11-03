@@ -15,7 +15,7 @@
 | G-R18-07 | Real Telegram follow-ups and reconciliation | **HOLD** | Controlled external transport evidence and safe ambiguous retry/reconcile policy |
 | G-AUTH-01 | Broker catalog vs verified adapters | **HOLD** (registered ≠ live-qualified) | Each adapter's authenticated feed/history capability test |
 | G-OPS-01 | FYERS account availability | **USER-REPORTED UNAVAILABLE** due to inactivity | Continue offline without FYERS; account restoration separate from development |
-| G-RELEASE-01 | Production deployment | **HOLD** | Complete integrated evidence, backup, authorized Apply/Verify/Rollback |
+| G-RELEASE-01 | Candidate packaging & rollback qualification | **BOUNDED PASS** for candidate ZIP packaging (249 files, SHA-256 `886A2F65C494AD975345550BEA34BD6DD34E1CC3602A46CA9AB565E3EAD4038B`), isolated sandbox execution (56/56 PASS), and rollback rehearsal; production Apply remains **HOLD** | User-authorized production Apply/Verify |
 
 ## Closed investigation / bounded acceptance (not installed deployment)
 

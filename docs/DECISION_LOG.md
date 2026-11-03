@@ -115,3 +115,15 @@ See [Project Status](PROJECT_STATUS.md), [Testing](TESTING_RELEASE_GATES.md) and
   - Verification: 14 new tests in `tests/test_r19_storage_security.py` (56/56 total R1.9 tests PASS in Windows Python 3.13 with 0 warnings).
 - **Consequence:** `G-R18-06` promoted to **BOUNDED PASS** in candidate scope. Production deployment (`R10H_APPLY=HOLD`), live broker requests (`LIVE_BROKER_REQUESTS=0`), and real orders (`ORDERS=0`) remain strictly on **HOLD**.
 
+## ADR-014 — R1.9 candidate packaging, sandbox verification, and rollback qualification (2026-11-03)
+
+- **Decision:** accepted release candidate source packaging and rollback rehearsal qualification for R1.9 under `scripts/Create-GammaUnwind-SourceSnapshot.ps1`.
+- **Scope & Evidence:**
+  - Candidate Archive: `E:\TA Projects\Gamma Unwind Source Code Audit\Gamma Unwind Source Code 2026-11-03_143234_106_IST_bad86e8f.zip`
+  - Candidate Whole-ZIP SHA-256: `886A2F65C494AD975345550BEA34BD6DD34E1CC3602A46CA9AB565E3EAD4038B`
+  - Archive Content: 249 source and documentation files (4,913,225 bytes); internal `SHA256SUMS.txt` (250 entries including `MANIFEST.json`) verified 100% with zero external sidecars.
+  - Isolated Sandbox Verification: Extracted ZIP to disposable directory in `%TEMP%` outside project tree; verified all 250 internal checksums match (0 missing, 0 hash mismatches).
+  - Isolated Test Suite Execution: Ran full 56/56 unit and integration test suite (`tests/test_r19_broker_neutral.py`, `tests/test_r19_runtime_lifecycle.py`, `tests/test_r19_storage_security.py`) directly against the extracted candidate package, executing in 3.99s with 0 errors, 0 failures, and 0 warnings.
+  - Rollback Procedure Rehearsal: Simulated emergency release rollback to baseline commit (`4a1d1d4`); verified that source file reversion succeeds while runtime databases (`data/gamma.db`, `data/watermark.db`, `data/state_generation.json`), environment secrets (`.env`), and runtime logs (`logs/`) remain 100% untouched and byte-identical (`STATUS: ROLLBACK_PROCEDURE_QUALIFIED_PASS`).
+- **Consequence:** `G-RELEASE-01` candidate packaging and rollback qualification promoted to **BOUNDED PASS**. Production deployment (`R10H_APPLY=HOLD`), live broker requests (`LIVE_BROKER_REQUESTS=0`), and real orders (`ORDERS=0`) remain on strict **HOLD** pending separate user authorization.
+

@@ -2,6 +2,14 @@
 
 This records **evidenced** milestones; it is not a claim that every experimental patch was applied to the installed application. Historical events are summarized from the 0.8.9 source snapshot and supplied R5 acceptance reports. See [Project status](docs/PROJECT_STATUS.md) for current PASS/HOLD gates.
 
+## Unreleased — R1.9 Phase 7 candidate packaging, sandbox verification, and rollback qualification (2026-11-03)
+
+- Packaged official R1.9 candidate source snapshot archive via `scripts/Create-GammaUnwind-SourceSnapshot.ps1`: `Gamma Unwind Source Code 2026-11-03_143234_106_IST_bad86e8f.zip` (SHA-256: `886A2F65C494AD975345550BEA34BD6DD34E1CC3602A46CA9AB565E3EAD4038B`), containing 249 source/doc files (4,913,225 bytes) and 250 internal checksum entries in `SHA256SUMS.txt` including `MANIFEST.json`.
+- Verified isolated sandbox integrity: extracted candidate archive to temporary location outside project root; verified 250/250 internal checksums without errors or mismatches.
+- Executed isolated test suite against extracted sandbox: all 56 unit and integration tests passed in 3.99s with 0 errors, 0 failures, and 0 warnings (`VERIFIED_GAMMAD_ROOT` confirmed in sandbox).
+- Qualified rollback rehearsal: confirmed that reverting source code to prior baseline preserves runtime databases (`data/gamma.db`, `data/watermark.db`, `data/state_generation.json`), `.env` secrets, and logs 100% untouched (`ROLLBACK_PROCEDURE_QUALIFIED_PASS`).
+- **Release status unchanged:** `R10H_APPLY=HOLD`; zero live orders, zero live broker calls.
+
 ## Unreleased — R1.9 broker-neutral multi-account, durable watermark, and Phase 5 storage security & corruption recovery candidate (2026-11-03)
 
 - Added `gammad/store/security.py` (Phase 5): `StorageSecurityError`, `StateRollbackError`, `verify_safe_path()` (strictly rejecting path traversal, symlinks, NTFS junctions, and `stat.FILE_ATTRIBUTE_REPARSE_POINT` across all path prefixes before `.resolve()`), `check_or_enforce_acls()` (Windows `icacls.exe` audit and optional inheritance-disabled ACL lockdown to current user and `SYSTEM`), and `StateGenerationManager` (per-DB monotonic generation and high-water mark tracking in `data/state_generation.json` with a SHA-256 tamper seal plus SQLite `PRAGMA application_id` generation stamp to detect backup-rollback attacks, `state_generation.json` deletion, and silent database removal).
