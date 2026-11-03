@@ -2,7 +2,10 @@
 
 ## November 2026 qualification checkpoint
 
-The source-gated 244-file disposable candidate passed **bounded** actual Runtime E2/E1, T1/T2 paper position transitions, paused-router/outbox and durable ambiguous-event quarantine tests. This **does not** establish full scheduler-to-real-Telegram delivery, exactly-once notifications, installed behavior or real order execution. R1.9 must preserve paper-only operation across multiple independent brokers/accounts without cross-account position leakage. Real orders remain prohibited. See [checkpoint](R18_EVIDENCE_AND_R19_HANDOFF.md).
+In the **R1.9 candidate**, the full synthetic V1 paper trade lifecycle is verified in candidate scope:
+- **Synthetic V1 Lifecycle:** Tested end-to-end in `tests/test_r19_runtime_lifecycle.py` (V1 entry signal $\to$ trade opening in SQLite $\to$ Target 1 tick trailing stop to entry breakeven $\to$ Target 2 exit at `CLOSED_T2` $\to$ outbox crash quarantine), closing `G-R18-03` to **BOUNDED PASS**.
+- **Multi-Account Paper Isolation:** Independent accounts maintain isolated paper trade records without cross-account state leakage.
+- **Zero Real Orders Invariant:** Real broker orders remain strictly prohibited (`ORDERS=0`, `LIVE_BROKER_REQUESTS=0`, `R10H_APPLY=HOLD`). Paper trading remains purely an informational shadow-tracking system. See [Project Status](PROJECT_STATUS.md).
 
 ## Product contract
 

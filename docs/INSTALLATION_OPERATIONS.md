@@ -2,7 +2,10 @@
 
 ## November 2026 operations and change-control notice
 
-Installed GAMMA 0.8.9 remains unchanged by the accepted R1.8 development evidence. The user's FYERS account is reportedly unavailable due to inactivity; do not attempt unauthorized broker calls or infer session validity from saved configuration. R1.9 multi-broker integration is planned, **not available in this installed client**. This documentation-only update must not enable feeds, Telegram or real orders. Applying updated Markdown changes source snapshot hashes and requires a documented documentation-only rebaseline before subsequent strict source-gated tests. The Word setup guide is preserved byte-for-byte. See [checkpoint](R18_EVIDENCE_AND_R19_HANDOFF.md).
+Installed GAMMA 0.8.9 remains the installed baseline until an authorized release deployment is performed. In the **R1.9 candidate**, multi-broker integration, preflight storage security, and corruption quarantine recovery are implemented and verified:
+- **Storage Pre-flight Guards:** `_preflight_storage_guard` runs on startup, auditing NTFS permissions via `icacls.exe`, verifying SQLite integrity with `PRAGMA quick_check(1)`, quarantining corrupt databases, and verifying monotonic generation seals (`StateGenerationManager`).
+- **Release Candidate Qualification:** The candidate package (249 source files, ZIP SHA-256 `886A2F65C494AD975345550BEA34BD6DD34E1CC3602A46CA9AB565E3EAD4038B`) passed all 56 offline tests in an isolated sandbox.
+- **Change Control:** Live broker calls, real orders, and production installation remain unauthorized (`LIVE_BROKER_REQUESTS=0`, `ORDERS=0`, `R10H_APPLY=HOLD`). See [Project Status](PROJECT_STATUS.md).
 
 **Installed source:** Windows `Start GAMMA.cmd`, `Stop GAMMA.cmd`, `Update GAMMA.cmd`, `Check Setup.cmd`, `run_gamma.pyw`; `gammad/app.py`, `gammad/install.py`, `gammad/tray/` and `gammad/jobs/readiness.py`. Full user instructions remain in the preserved `GAMMA-UNWIND-Setup-Guide.docx` (0.8.9).
 

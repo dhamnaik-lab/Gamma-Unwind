@@ -2,7 +2,11 @@
 
 ## November 2026 design decision — mandatory multi-broker
 
-The installed 0.8.9 registry/profile UI does **not** constitute a fully concurrent, account-scoped broker Runtime. **R1.9 is planned, not implemented.** Require multiple accounts per broker and multiple simultaneously connected brokers, explicit broker+account authorization, per-account token/session/feed isolation and revision checks. No hard-coded/default broker; independently select qualified live and historical providers. The user reports FYERS currently disabled due to inactivity; it is one optional adapter and must not block offline development. The 245-file optional watermark requires a trusted stable account identity and is **not** in the default factory. See [accepted checkpoint](R18_EVIDENCE_AND_R19_HANDOFF.md).
+The installed 0.8.9 registry/profile UI does not constitute a fully concurrent, account-scoped broker Runtime. In the **R1.9 candidate**, multi-broker and multi-account concurrent operations are fully implemented in candidate scope:
+- **Multi-Account Session Management:** `AccountSessionManager` (`gammad/broker/account.py`) manages concurrent accounts with failure isolation and dynamic fallback.
+- **Config Ingestion:** `gammad/broker/config_loader.py` supports both Mode A (legacy `.env` fallback) and Mode B (multi-account JSON via `GAMMA_ACCOUNTS_JSON`).
+- **Decoupled Historical Provider:** `HistoryProviderConfig` enables selecting historical data sources completely independently of trading broker sessions.
+- **No Default Broker:** There is no hardcoded primary broker. The user-reported FYERS inactivity does not block offline multi-broker execution. Production deployment remains on hold (`R10H_APPLY=HOLD`). See [Project Status](PROJECT_STATUS.md).
 
 **Source:** `gammad/broker/registry.py`, `gammad/broker/capabilities.py`, `gammad/api/server.py`, `gammad/api/broker_selection.py`, provider `auth.py` and `adapter.py` modules.
 

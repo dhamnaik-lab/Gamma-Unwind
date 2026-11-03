@@ -2,9 +2,12 @@
 
 ## November 2026 current qualification and provider independence
 
-Synthetic request-budget/session tests and partial Runtime history bridge checks have passed, but **genuine provider entitlement, expired-option history and complete valid 2,000-bar/2,000-session coverage remain HOLD**. The user reports the FYERS account is currently disabled due to inactivity. R1.9 must **not depend on FYERS** or silently substitute a preferred data provider; history may come from an independently authorized and quality-certified provider. Provider-selection rights, instrument/expiry mapping, rate limits, continuity, timestamp provenance and calendar rules must be verified before any live usage. See [checkpoint](R18_EVIDENCE_AND_R19_HANDOFF.md).
+In the **R1.9 candidate**, historical data providers are structurally decoupled from trading broker accounts:
+- **Decoupled Architecture:** `HistoryProviderConfig` (`gammad/broker/account.py`) and `load_history_provider_config` (`gammad/broker/config_loader.py`) allow historical market data to be sourced from any designated provider independently of trading broker sessions.
+- **Provider Rights HOLD:** Synthetic and offline request budget tests pass, but **genuine provider entitlement, expired-option history, and validated 2,000-bar coverage remain HOLD** (`G-R18-05`).
+- **No FYERS Dependency:** The architecture does not rely on FYERS (the user reports FYERS account disabled due to inactivity). Offline development continues with decoupled synthetic feeds.
 
-**Status:** R5/R1.8 development **disposable and HOLD for live use**. Installed 0.8.9 has broker adapters, daily/5-minute time-series consumers and warmup/backfill logic. The later SDK-free FYERS read-only history acquisition component is candidate code, not proof of live entitlement.
+**Status:** R1.9 candidate architecture qualified offline (56/56 tests PASS); live provider entitlement remains on **HOLD**. See [Project Status](PROJECT_STATUS.md).
 
 ## Purpose and data contract
 

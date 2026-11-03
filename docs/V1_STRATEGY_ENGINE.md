@@ -2,7 +2,10 @@
 
 ## November 2026 parity checkpoint
 
-The accepted R1.8 **disposable** actual Runtime final-lifecycle evidence exercises nonzero E2/E1 and paper T1/T2 transitions. It is **bounded**, not a full baseline/candidate scheduler-to-alert parity certification. Continue preserving the installed contract: E2 is evaluated from closed bars, while actual E1 may arise on a forming-bar tick after the completed-bar setup. Do **not** silently redefine E1 as closed-bar-only, alter stops/targets or label a synthetic signal replay as full non-repaint proof. See [checkpoint](R18_EVIDENCE_AND_R19_HANDOFF.md).
+In the **R1.9 candidate**, full synthetic V1 strategy lifecycle parity is verified in candidate scope:
+- **Full Lifecycle Integration:** Evaluated end-to-end in `tests/test_r19_runtime_lifecycle.py` from history backfill and feed ticks through V1 entry signal firing, paper position opening, Target 1 stop-trailing, Target 2 exit, and crash quarantine (`G-R18-03` promoted to **BOUNDED PASS**).
+- **Preserved Signal Contracts:** Preserves installed mechanics: E2 is evaluated on closed five-minute bars; E1 breakout fires on forming-bar live ticks when armed. Stops and targets are tracked deterministically without silent strategy mutations.
+- **Release Boundary:** Synthetic verification passes (56/56 tests PASS), but production deployment remains on hold (`R10H_APPLY=HOLD`). See [Project Status](PROJECT_STATUS.md).
 
 **Source authority:** installed `gammad/watch/engine.py`, `gammad/v1/entry.py`, `states.py`, `position.py`, `stops.py`, `exits.py`, `gammad/trade/tracker.py`. Also consult the original setup guide, which describes the scanner in plain words but not every implementation branch.
 

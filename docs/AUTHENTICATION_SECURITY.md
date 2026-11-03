@@ -1,8 +1,14 @@
 # Authentication, session security and data boundaries
 
-## November 2026 account authority requirement
+## November 2026 account authority and storage security
 
-A login URL, App ID, access token or currently selected broker name is **not sufficient** to establish a stable authorized broker/account identity for durable market-data state. The accepted 245-file watermark prototype requires an explicit trusted per-account scope, but **default Runtime binding remains HOLD**. R1.9 must enforce concurrent-account isolation, exact broker and account revisions, token privacy and expiry, safe switching, independent authorized market-data provider selection and refusal on ambiguous identity. No real credentials or live calls are authorized by the documentation update. See [checkpoint](R18_EVIDENCE_AND_R19_HANDOFF.md).
+A login URL, App ID, access token or currently selected broker name is not sufficient to establish a stable authorized broker/account identity for durable market-data state. In the **R1.9 candidate**:
+- **Account Identity & Isolation:** `AccountIdentity` (`gammad/broker/account.py`) binds credentials, tokens, and active feeds to a distinct `broker:account_id` namespace, preventing cross-account state leakage.
+- **Windows Storage ACLs:** `check_or_enforce_acls` (`gammad/store/security.py`) audits and restricts NTFS directory permissions via `icacls.exe` to `$env:USERNAME` and `SYSTEM`.
+- **Tamper & Rollback Guard:** `StateGenerationManager` maintains a monotonic generation counter with a domain-separated SHA-256 seal and SQLite `PRAGMA application_id` stamping, blocking restored older database backups.
+- **Path & Junction Protection:** `verify_safe_path` rejects directory traversal, symlinks, and NTFS junction reparse points before database access.
+
+No real credentials or live calls are authorized by this documentation. `R10H_APPLY=HOLD`. See [Project Status](PROJECT_STATUS.md).
 
 **Scope:** installed `gammad/auth/oauth.py`, `token_watch.py`, broker auth modules and `gammad/api/server.py`. This is a security reference, not a request to use real credentials.
 
@@ -31,8 +37,8 @@ A login URL, App ID, access token or currently selected broker name is **not suf
 
 Wrong OAuth state, expired token, rotated token while a watcher exists, stale watcher revision, invalid broker mapping, repeated login, unauthorized local route, remote route attempted with local-only control, malformed JSON and token-bearing exception text. Review outputs for redaction; avoid dumping `.env` or traceback locals.
 
-## R5 candidate boundary
+## Storage and token safety boundary
 
-Offline history work includes a synthetic FYERS session-reuse bridge. R1.8 added a disposable SQLite request ledger keyed by broker/application scope. This is **not proof of secure production token-vault integration**; private Windows ACL, owner scope, file tampering/backup rollback and genuine historical rights are HOLD. Do not enable broker APIs solely because the ledger module exists.
+R1.9 Phase 5 implemented and verified production storage security (`gammad/store/security.py`) and SQLite corruption quarantine recovery (`gammad/store/recovery.py`), closing `G-R18-06` to BOUNDED PASS. However, genuine historical provider rights, live token vaults, and production installation remain on HOLD (`R10H_APPLY=HOLD`). Do not enable live broker calls without explicit approval.
 
 For broader operational controls see [API Reference](API_REFERENCE.md), [Historical Data](HISTORICAL_DATA.md) and [Testing & Release Gates](TESTING_RELEASE_GATES.md).

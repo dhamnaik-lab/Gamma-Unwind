@@ -21,7 +21,9 @@ $runner = '.\scripts\Create-GammaUnwind-SourceSnapshot.ps1'
 
 ## Authority and integrity
 
-The **R3 snapshot was subsequently supplied and independently verified**: `Gamma Unwind Source Code 2026-10-31_123418_650_IST_cc136e62.zip`, whole-archive SHA-256 `6AFF21F16381ADA2CDEBD0E706CC03FEA642E4BB262E2BE1FAD233A8D538897D`, with **237 original source/document files** plus internal manifest and `SHA256SUMS.txt`. This supersedes R2 as the 31 October pre-R1.8 installed-source authority. The older R2 snapshot `Gamma Unwind Source Code 2026-10-31_023834_017_IST_7f5baf5a.zip` (221 source files, ZIP SHA-256 `7408392DDBB5B4E50854D796303328D90A4734654ED5351BB34038583D29BF44`) remains a valid **historical** checkpoint.
+The **R1.9 candidate snapshot was packaged and independently verified** on 3 November 2026: `Gamma Unwind Source Code 2026-11-03_143234_106_IST_bad86e8f.zip`, whole-archive SHA-256 `886A2F65C494AD975345550BEA34BD6DD34E1CC3602A46CA9AB565E3EAD4038B`, with **249 source files** plus internal manifest and `SHA256SUMS.txt` (250 entries). Extracted to an isolated sandbox directory, all 250 checksums matched (0 mismatches), and the full 56-test suite passed under isolated `sys.path` with zero warnings.
+
+The **R3 snapshot remains the pre-R1.8 installed-source authority**: `Gamma Unwind Source Code 2026-10-31_123418_650_IST_cc136e62.zip`, whole-archive SHA-256 `6AFF21F16381ADA2CDEBD0E706CC03FEA642E4BB262E2BE1FAD233A8D538897D`, with **237 original source/document files** plus internal manifest and `SHA256SUMS.txt`. The older R2 snapshot `Gamma Unwind Source Code 2026-10-31_023834_017_IST_7f5baf5a.zip` (221 source files, ZIP SHA-256 `7408392DDBB5B4E50854D796303328D90A4734654ED5351BB34038583D29BF44`) remains a valid **historical** checkpoint.
 
 Within R3, the checksum list covers each source entry and the internal JSON manifest. **It cannot include a hash of itself or the complete final ZIP**, which is why the complete ZIP SHA-256 is printed only to the terminal.
 

@@ -1,10 +1,10 @@
 # GAMMA-UNWIND
 
-**Windows client · installed baseline 0.8.9 · documentation updated 2026-11-02**
+**Windows client · installed baseline 0.8.9 · candidate qualification updated 2026-11-03**
 
 GAMMA-UNWIND is a locally operated NSE F&O options scanner. It builds support/resistance-driven watchlists, observes option price/volume/open-interest activity, evaluates configured signal rules, and exposes a browser dashboard with optional Telegram alerts and follow-ups. It is **not an order-placement system**. Alerts are informational; paper-position tracking is not broker execution.
 
-> **Release boundary (2 November 2026):** R1.8 bounded offline qualifications passed through the optional 245-file watermark prototype, but none of those changes is installed. R1.9 multi-broker integration is the next **planned** development stage and is not yet implemented. Real provider entitlement, full scheduler/notification delivery, trusted per-account routing, ACL and release readiness remain HOLD. **R10H Apply = HOLD.**
+> **Release boundary (3 November 2026):** R1.9 candidate development is qualified through Phases 1–5 and Phase 7 (packaging/rollback qualification). The 249-source candidate archive (`886A2F65C494AD975345550BEA34BD6DD34E1CC3602A46CA9AB565E3EAD4038B`) passed all 56/56 offline unit, integration, and sandbox tests with zero warnings. Phase 6 (Telegram receipt/idempotency) was deferred by user decision. Production deployment, live broker transport, and real orders remain strictly on HOLD. **R10H Apply = HOLD, ORDERS = 0, LIVE_BROKER_REQUESTS = 0.**
 
 ## Quick start (installed Windows client)
 
@@ -37,13 +37,11 @@ The running application's actual endpoints/settings remain authoritative over ex
 | Verified route inventory | [API Reference](docs/API_REFERENCE.md) |
 | Important decisions | [Decision Log](docs/DECISION_LOG.md) |
 
-## Current source of truth (2 November 2026)
+## Current source of truth (3 November 2026)
 
-- **Installed R3 source snapshot (verified):** `Gamma Unwind Source Code 2026-10-31_123418_650_IST_cc136e62.zip`, SHA-256 `6AFF21F16381ADA2CDEBD0E706CC03FEA642E4BB262E2BE1FAD233A8D538897D`; 237 original source/document files with the two internal snapshot metadata entries. This supersedes the older 221-file R2 historical snapshot as the 31 October R3 baseline.
-- **Installed distribution remains 0.8.9; no R1.8 candidate source applied.** Existing 0.8.9 routes, UI and behavior must not be described as R1.8 features merely because synthetic tests passed.
-- **Latest accepted R1.8 watermark evidence:** `GAMMA_R18_WATERMARK_OFFLINE_EVIDENCE.zip` from the 17:20 IST Windows run, SHA-256 `9DE6BC780D9E3B3F175C00DB1B508442F87846C9CDFA11EB27C47C54103ADE2F`. The 245-source disposable candidate SHA-256 is `39C71BFA8F7ABD2C1D4ABBEE8BB1A88F52903E6EDF82A1F86E105E180111A1FE`. The new module is **not connected** to the installed Runtime feed factory.
-- **Development direction:** broker-neutral GAMMA with multiple independent accounts/connections, data providers separate from brokers, no preferred broker, read-only paper monitoring. The user-reported FYERS inactivity does not block synthetic multi-broker development.
+- **Installed R3 source snapshot (baseline):** `Gamma Unwind Source Code 2026-10-31_123418_650_IST_cc136e62.zip`, SHA-256 `6AFF21F16381ADA2CDEBD0E706CC03FEA642E4BB262E2BE1FAD233A8D538897D`; 237 original source/document files.
+- **R1.9 Qualified Candidate Source Snapshot (Phase 7):** `Gamma Unwind Source Code 2026-11-03_143234_106_IST_bad86e8f.zip`, SHA-256 `886A2F65C494AD975345550BEA34BD6DD34E1CC3602A46CA9AB565E3EAD4038B`; 249 source files (250 entries in internal `SHA256SUMS.txt`). Verified 100% checksum match and 56/56 tests PASS in isolated sandbox.
+- **Installed distribution remains 0.8.9:** Candidate source has been qualified offline; production deployment remains strictly on hold (`R10H_APPLY=HOLD`).
+- **Development architecture:** Broker-neutral multi-account session management (`AccountSessionManager`), decoupled historical data (`HistoryProviderConfig`), durable feed watermark (`DurableTickQueue`), Windows storage security (`verify_safe_path`, `check_or_enforce_acls`), and SQLite corruption quarantine recovery (`quarantine_and_recover`).
 
-See [the exact evidence, gate matrix and remaining work](docs/R18_EVIDENCE_AND_R19_HANDOFF.md).
-
-**Documentation-only update:** These Markdown changes preserve Python source, executable, credentials, token vaults, database, configuration and the existing Word setup guide. Applying them to the installed tree changes documentation SHA-256 values, so subsequent 237-file source-gated qualification must explicitly rebaseline the approved documentation delta; never silently weaken prior pins.
+See [Project Status](docs/PROJECT_STATUS.md) and [Decision Log](docs/DECISION_LOG.md).

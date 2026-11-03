@@ -2,7 +2,10 @@
 
 ## November 2026 durable-feed qualification checkpoint
 
-The 244-file actual Runtime lifecycle probe **reproduced** a timestamp regression after rebuilding the old FYERS feed state. A new optional `gammad/broker/fyers/durable_watermark.py` in the 245-file **disposable** candidate passed 10/10 Windows Python 3.13 offline tests for scoped persistence, concurrent claims and synthetic restart. **It is not wired into the default factory**, and the trusted account identity, production ACL, queue/drop throughput, missing-LTT semantics, switch/restart and provider transport are **not live-qualified**. Do not present synthetic watermark PASS as installed feed protection. See [checkpoint](R18_EVIDENCE_AND_R19_HANDOFF.md).
+In the **R1.9 candidate**, the broker-neutral durable watermark engine is fully integrated into the runtime feed hook:
+- **Broker-Neutral Watermark Engine:** `gammad/broker/durable_watermark.py` (`WatermarkStore`, `DurableTickQueue`) is wired into `Runtime._registry_feed` in `gammad/app.py`.
+- **Regression Guard:** Rejects out-of-order, stale, or regressing Last Traded Time (`LTT`) ticks across feed reconnects, protecting against post-reconnect timestamp reversals (`G-R18-04` promoted to **BOUNDED PASS**).
+- **Offline Qualification:** Verified across 24/24 watermark and feed recovery tests in `tests/test_r19_broker_neutral.py`. Live provider streaming qualification remains on **HOLD** (`R10H_APPLY=HOLD`). See [Project Status](PROJECT_STATUS.md).
 
 **Installed source:** `gammad/broker/fyers/feed.py`, `gammad/watch/feed.py`, `feed_protocol.py`, `bars.py`, `subscriptions.py`, `reconnect.py`, `warmup.py`, `feed_alarm.py`, `gammad/app.py`.
 
