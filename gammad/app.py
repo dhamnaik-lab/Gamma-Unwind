@@ -6167,6 +6167,69 @@ def _make_token_watcher(runtime: Runtime, cfg: Settings) -> Any:
     return watcher
 
 
+def _preflight_storage_guard(
+    cfg: Settings,
+    watermark_ledger_path: Path,
+    *,
+    enforce_acls: bool = False,
+) -> tuple[Any, list[tuple[Path, str, bool]]]:
+    """R1.9 Phase 5 pre-flight storage security, corruption recovery, and state generation guard.
+
+    1. Verifies `data_dir`, `db_path`, and `watermark_ledger_path` against path traversal and NTFS junctions.
+    2. Audits (or optionally enforces) Windows NTFS ACLs on `data_dir`.
+    3. Runs pre-flight integrity checks (`verify_database_integrity`) on `db_path` and `watermark_ledger_path`;
+       quarantines and rebuilds any corrupted database.
+    4. Verifies the state generation seal (`StateGenerationManager`) prior to opening runtime connections.
+    """
+    from gammad.store.recovery import (
+        init_watermark_schema,
+        quarantine_and_recover,
+        verify_database_integrity,
+    )
+    from gammad.store.security import (
+        StateGenerationManager,
+        check_or_enforce_acls,
+        verify_safe_path,
+    )
+
+    data_dir = cfg.paths.data_dir
+    data_dir.mkdir(parents=True, exist_ok=True)
+    safe_data_dir = verify_safe_path(data_dir, data_dir)
+    safe_db_path = verify_safe_path(cfg.paths.db_path, safe_data_dir)
+    safe_wm_path = verify_safe_path(watermark_ledger_path, safe_data_dir)
+
+    acl_report = check_or_enforce_acls(safe_data_dir, enforce=enforce_acls)
+    if not acl_report["secure"]:
+        log.warning(
+            "storage security audit: data_dir %s has broad ACL entries: %s",
+            safe_data_dir,
+            ", ".join(acl_report["insecure_entries"]),
+        )
+
+    gen_mgr = StateGenerationManager(safe_data_dir / "state_generation.json")
+    # Verify seal integrity up front before touching databases
+    gen_mgr.load_state()
+
+    targets: list[tuple[Path, str, Any]] = [
+        (safe_db_path, "gamma.db", lambda conn: db.migrate(conn, backup=False)),
+        (safe_wm_path, "watermark.db", init_watermark_schema),
+    ]
+    recovered_list: list[tuple[Path, str, bool]] = []
+    for target_path, db_key, init_fn in targets:
+        was_quarantined = False
+        if not verify_database_integrity(target_path):
+            quarantine_and_recover(target_path, schema_init_fn=init_fn, quarantine_dir=safe_data_dir / "quarantine")
+            was_quarantined = True
+        gen_mgr.verify_and_advance(
+            target_path,
+            db_key=db_key,
+            allow_quarantine_reset=was_quarantined,
+        )
+        recovered_list.append((target_path, db_key, was_quarantined))
+
+    return gen_mgr, recovered_list
+
+
 async def serve_async(*, tray: bool = True, cfg: Settings | None = None) -> int:
     from gammad.api import lan
     from gammad.api import server as api_server
@@ -6174,9 +6237,15 @@ async def serve_async(*, tray: bool = True, cfg: Settings | None = None) -> int:
     from gammad.config import settings
 
     cfg = cfg or settings()
+    watermark_ledger_path = cfg.paths.data_dir / "watermark.db"
+    enforce_acls = str(cfg.env.values.get("GAMMA_ENFORCE_ACLS", "")).strip().lower() in ("1", "true", "yes")
+    gen_mgr, _preflight_dbs = _preflight_storage_guard(
+        cfg,
+        watermark_ledger_path,
+        enforce_acls=enforce_acls,
+    )
     session_manager = load_account_session_manager(cfg)
     history_cfg = load_history_provider_config(cfg)
-    watermark_ledger_path = cfg.paths.data_dir / "watermark.db"
     runtime = Runtime(
         cfg,
         telegram=_make_telegram(cfg),
@@ -6186,6 +6255,9 @@ async def serve_async(*, tray: bool = True, cfg: Settings | None = None) -> int:
         watermark_ledger_path=watermark_ledger_path,
         history_config=history_cfg,
     )
+    # Seal post-initialization database state (e.g., after db.migrate() on fresh or upgraded gamma.db)
+    for target_path, db_key, _ in _preflight_dbs:
+        gen_mgr.verify_and_advance(target_path, db_key=db_key)
     app = api_server.create_app(runtime)
     # W16 S2 (T-129, B1): loopback, plus this PC's RFC1918 address ONLY when GAMMA_LAN is on AND a password is set
     # (bind_hosts logs the single ERROR for GAMMA_LAN without a password; it never returns 0.0.0.0)
@@ -6232,6 +6304,9 @@ async def serve_async(*, tray: bool = True, cfg: Settings | None = None) -> int:
         if tray_handle is not None:
             with contextlib.suppress(Exception):
                 tray_handle.stop()
+        with contextlib.suppress(Exception):
+            for target_path, db_key, _ in _preflight_dbs:
+                gen_mgr.verify_and_advance(target_path, db_key=db_key)
     return exit_code
 
 

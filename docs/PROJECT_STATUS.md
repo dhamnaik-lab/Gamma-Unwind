@@ -1,6 +1,6 @@
 # Project status and release authority
 
-**Updated 2 November 2026 IST · Installed client 0.8.9 · Development R1.8 bounded PASS, R1.9 planned · R10H Apply HOLD.**
+**Updated 3 November 2026 IST · Installed client 0.8.9 · Development R1.8 bounded PASS, R1.9 Phases 1–5 bounded PASS · R10H Apply HOLD.**
 
 ## Three separate authorities
 
@@ -24,20 +24,19 @@
 | Synthetic full lifecycle & validation notebook (Phase 2 & 3) | 42/42 tests PASS (`tests/test_r19_broker_neutral.py`, `tests/test_r19_runtime_lifecycle.py`), interactive notebook `notebooks/r19_broker_neutral_audit.ipynb`, committed `f30c0b1` | PASS — bounded synthetic lifecycle; external live transport **HOLD** |
 | Multi-account config ingestion & runtime startup bootstrap (Phase 4) | R1.9 `config_loader.py` (Mode A legacy fallback, Mode B multi-account JSON, decoupled history provider), `gammad/config.py` .env ingestion, `serve_async` startup wiring, dynamic `Runtime.broker_entry` and `_registry_feed` resolution, committed `f30c0b1` | PASS — bounded candidate |
 | Genuine history entitlement, expired contracts and validated 2,000 bars | No accepted live read-only provider evidence | **HOLD** |
-| Production Windows ACL, backup rollback and migration (Phase 5) | See detailed handoff in [R19_PHASE5_HANDOFF.md](R19_PHASE5_HANDOFF.md) | **HOLD** (Next implementation phase) |
-| Real Telegram receipt/idempotency (Phase 6) | Not qualified | **HOLD** |
+| Production Windows ACL, backup rollback and migration (Phase 5) | R1.9 `gammad/store/security.py` (path/junction guard, `icacls` ACL audit/enforcement, SHA-256 `StateGenerationManager` + `PRAGMA application_id` stamp), `gammad/store/recovery.py` (`PRAGMA quick_check(1)`, quarantine & clean WAL rebuild), `serve_async` preflight wiring, 14/14 tests in `tests/test_r19_storage_security.py` (56/56 total R1.9 tests PASS, 0 warnings) | PASS — bounded candidate |
+| Real Telegram receipt/idempotency (Phase 6) | Not qualified | **HOLD** (Next implementation phase) |
 | R10H production Apply / Verify / Rollback (Phase 7) | No release authorization | **HOLD** |
 
 ## Broker and operating policy
 
 **No fixed primary/default broker.** Multi-broker and multiple concurrent accounts are mandatory. Historical market-data provider selection must remain independent of the currently selected trading broker. Broker catalog count is not live provider readiness. The user reports their FYERS account is disabled due to inactivity; offline development can continue without live FYERS access. Paper monitoring only; zero real orders.
 
-## Next stage: Phase 5 (Handoff for Next Session)
+## Completed Stage: Phase 5 & Next Stage: Phase 6
 
-**Phase 5: Windows Storage ACL Hardening, Tamper Protection & SQLite Corruption Quarantine Recovery.**
-- **Specification & Instructions:** Fully detailed in [`docs/R19_PHASE5_HANDOFF.md`](R19_PHASE5_HANDOFF.md).
-- **Scope:** NTFS ACL lockdown (`icacls`), reparse point / junction rejection, ledger generational rollback seal (`StateRollbackError`), and startup SQLite corruption quarantine (`PRAGMA quick_check`).
-- **Baseline Git Commit:** [`f30c0b1`](https://github.com/dhamnaik-lab/Gamma-Unwind/commit/f30c0b13350ebe2be90940faf192bd630d345fe1) (in sync with GitHub `origin/main`).
+**Completed — Phase 5: Windows Storage ACL Hardening, Tamper Protection & SQLite Corruption Quarantine Recovery (`G-R18-06` BOUNDED PASS).**
+- **Deliverables:** `gammad/store/security.py`, `gammad/store/recovery.py`, `_preflight_storage_guard` in `gammad/app.py`, and `tests/test_r19_storage_security.py` (56/56 total R1.9 tests PASS, 0 `ResourceWarning`s).
+- **Next Stage (Phase 6):** Real Telegram receipt/idempotency and ambiguous retry/reconcile policy (currently **HOLD**).
 - **Safety Invariants:** `LIVE_BROKER_REQUESTS=0`, `ORDERS=0`, `R10H_APPLY=HOLD`. Zero live broker requests.
 
 
