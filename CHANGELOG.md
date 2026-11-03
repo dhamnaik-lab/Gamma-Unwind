@@ -6,7 +6,7 @@ This records **evidenced** milestones; it is not a claim that every experimental
 
 - Packaged official R1.9 candidate source snapshot archive via `scripts/Create-GammaUnwind-SourceSnapshot.ps1`: `Gamma Unwind Source Code 2026-11-03_143234_106_IST_bad86e8f.zip` (SHA-256: `886A2F65C494AD975345550BEA34BD6DD34E1CC3602A46CA9AB565E3EAD4038B`), containing 249 source/doc files (4,913,225 bytes) and 250 internal checksum entries in `SHA256SUMS.txt` including `MANIFEST.json`.
 - Verified isolated sandbox integrity: extracted candidate archive to temporary location outside project root; verified 250/250 internal checksums without errors or mismatches.
-- Executed isolated test suite against extracted sandbox: all 56 unit and integration tests passed in 3.99s with 0 errors, 0 failures, and 0 warnings (`VERIFIED_GAMMAD_ROOT` confirmed in sandbox).
+- Executed isolated test suite against extracted sandbox: all 56 unit and integration tests passed (56/56 PASS in 3.89s) with 0 errors, 0 failures, and 0 warnings, verified with sys.path isolation and gammad loaded strictly from the extracted sandbox directory.
 - Qualified rollback rehearsal: confirmed that reverting source code to prior baseline preserves runtime databases (`data/gamma.db`, `data/watermark.db`, `data/state_generation.json`), `.env` secrets, and logs 100% untouched (`ROLLBACK_PROCEDURE_QUALIFIED_PASS`).
 - **Release status unchanged:** `R10H_APPLY=HOLD`; zero live orders, zero live broker calls.
 
