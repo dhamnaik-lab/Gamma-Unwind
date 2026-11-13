@@ -6,9 +6,8 @@ exist yet is simply absent (`MISSING`); one that raises on import, or whose ENTR
 another entry, is kept out and recorded in `BROKEN` with the reason -- the owner's Dhan service must never fail
 to start because a BETA module is broken, and tests/test_broker_contract.py fails on any BROKEN entry.
 
-Edition rules (D86):
-  * owner: `BROKER` absent -> "dhan" (no .env change for the owner, PLAN-W12 §2 item 1).
-  * client: `BROKER` absent -> RegistryError (the client chooses; the app never guesses a broker).
+Edition rules (D86 / no-default-broker):
+  * owner & client: `BROKER` absent -> RegistryError (never guesses a default broker; the user chooses).
   * client token lifecycle is always ("paste",): the client pastes the token / credentials in .env or on the
     Token page. Automated login (TOTP, OAuth) is owner-only: `auto_login` calls `edition.require_owner` before
     touching the entry, and entries import gammad.auth.* only inside their owner-only functions.
@@ -37,7 +36,7 @@ log = get_logger(__name__)
 # D726 (amends D488 (3)): Shoonya + Flattrade ship in 0.8.9 as BETA (status beta-unverified, no live smoke yet);
 # Zebu / ICICI / 5paisa / Paytm / INDmoney stay unregistered (0.9.0 after a live smoke each).
 KNOWN_BROKERS: tuple[str, ...] = (
-    "dhan", "zerodha", "angel", "fyers", "upstox", "nuvama", "kotak", "groww", "shoonya", "flattrade",
+    "dhan", "zerodha", "angel", "fyers", "upstox", "nuvama", "kotak", "groww", "shoonya", "flattrade", "definedge",
 )
 ENTRY_MODULES: dict[str, str] = {
     b: ("gammad.broker.dhan_entry" if b == "dhan" else f"gammad.broker.{b}") for b in KNOWN_BROKERS
@@ -54,9 +53,9 @@ ENV_PREFIX: dict[str, str] = {
     "groww": "GROWW_",
     "shoonya": "SHOONYA_",
     "flattrade": "FLATTRADE_",
+    "definedge": "DEFINEDGE_",
 }
 BROKER_ENV_KEY = "BROKER"
-OWNER_DEFAULT_BROKER = "dhan"
 CLIENT_TOKEN_KINDS: tuple[str, ...] = ("paste",)
 # T-112: a key the service starts without but the daily Token-page login needs. Declared per entry package as
 # `LOGIN_KEYS` (EnvKey.need stays "optional": capabilities.NEEDS is the start rule, this is Check Setup's rule).
@@ -150,12 +149,10 @@ def get(name: str) -> BrokerEntry:
 
 
 def resolve(broker_value: str | None, edition: str | None = None) -> BrokerEntry:
-    """`.env` BROKER -> entry. Owner: absent -> dhan. Client: absent -> RegistryError (never guessed)."""
-    ed = edition or _edition.edition()
+    """`.env` BROKER -> entry. Absent/empty BROKER -> RegistryError in every edition (never guessed)."""
+    _ = edition or _edition.edition()
     value = (broker_value or "").strip().lower()
     if not value:
-        if ed == _edition.OWNER:
-            return get(OWNER_DEFAULT_BROKER)
         raise RegistryError(f"BROKER is not set in .env ({' | '.join(KNOWN_BROKERS)})")
     return get(value)
 

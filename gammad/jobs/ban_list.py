@@ -18,15 +18,15 @@ backtest/lab/wf/labels.py _ban_symbol (:244-252) and read_bans' header regex (:2
 
 from __future__ import annotations
 
-import http.client
 import re
 import time
-import urllib.error
-import urllib.request
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
 from typing import Any, NamedTuple
+from urllib.parse import urlsplit
+
+import httpx
 
 from gammad.log import get_logger
 
@@ -133,40 +133,48 @@ def parse(body: bytes, day: date, content_type: str = "") -> frozenset[str]:
     return frozenset(out)
 
 
-class _ArchiveOnly(urllib.request.HTTPRedirectHandler):  # nse_files.ArchiveOnly
-    def redirect_request(self, req: Any, fp: Any, code: Any, msg: Any, headers: Any, newurl: Any) -> Any:
-        raise urllib.error.URLError("redirect refused; only the NSE archive host is fetched")
-
-
-def _read(response: Any, status: int) -> FetchResult:  # nse_files.read_response
-    body = response.read(MAX_BYTES + 1)
+def _read_httpx(response: httpx.Response) -> FetchResult:
     content_type = response.headers.get("Content-Type", "")
+    chunks: list[bytes] = []
+    size = 0
+    for chunk in response.iter_bytes():
+        size += len(chunk)
+        if size > MAX_BYTES:
+            return FetchResult(0, b"", content_type, "oversized")
+        chunks.append(chunk)
+    body = b"".join(chunks)
     length = response.headers.get("Content-Length")
-    if length is not None:
+    if length is not None and not response.headers.get("Content-Encoding"):
         try:
             declared = int(length)
         except (TypeError, ValueError):
             return FetchResult(0, body, content_type, "invalid Content-Length")
         if declared != len(body):
             return FetchResult(0, body, content_type, "truncated")
-    if len(body) > MAX_BYTES:
-        return FetchResult(0, b"", content_type, "oversized")
-    return FetchResult(status, body, content_type)
+    return FetchResult(response.status_code, body, content_type)
 
 
 def transport(url: str) -> FetchResult:
-    """One GET with the history tool's headers (nse_files.transport); never raises."""
-    request = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "*/*"})
+    """One GET with NSE browser-compatible headers over HTTPX; never raises."""
+    parsed = urlsplit(url)
+    if parsed.scheme != "https" or parsed.hostname != HOST:
+        return FetchResult(0, b"", "", "host refused")
+    headers = {
+        "User-Agent": UA,
+        "Accept": "text/csv,text/plain,*/*",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Referer": f"https://{HOST}/",
+    }
     try:
-        try:
-            with urllib.request.build_opener(_ArchiveOnly()).open(request, timeout=TIMEOUT_S) as response:
-                return _read(response, response.status)
-        except urllib.error.HTTPError as exc:
-            with exc:
-                return _read(exc, exc.code)
-    except http.client.IncompleteRead:
-        return FetchResult(0, b"", "", "truncated")
-    except (urllib.error.URLError, OSError, http.client.HTTPException) as exc:
+        with httpx.Client(timeout=TIMEOUT_S, follow_redirects=False, headers=headers) as client:
+            with client.stream("GET", url) as response:
+                if 300 <= response.status_code < 400:
+                    return FetchResult(0, b"", "", "redirect refused; only the NSE archive host is fetched")
+                return _read_httpx(response)
+    except httpx.HTTPError as exc:
+        return FetchResult(0, b"", "", "transport failure: " + type(exc).__name__)
+    except OSError as exc:
         return FetchResult(0, b"", "", "transport failure: " + type(exc).__name__)
 
 

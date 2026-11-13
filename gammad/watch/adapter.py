@@ -141,6 +141,14 @@ class ContractBars:
             return
         self._today.append(bar)
 
+    def merge_today(self, bars: Sequence[Bar]) -> None:
+        """Merge backfilled today bars chronologically without dropping newer live bars."""
+        merged = {b.ts_ms: b for b in self._today}
+        for b in bars:
+            merged.setdefault(b.ts_ms, b)
+        last_seed = self._seed[-1].ts_ms if self._seed else None
+        self._today = [merged[t] for t in sorted(merged) if last_seed is None or t > last_seed]
+
     @property
     def n_seed(self) -> int:
         return len(self._seed)

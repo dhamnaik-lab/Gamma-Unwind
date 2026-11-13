@@ -1,13 +1,14 @@
 # Historical market-data integration
 
-## November 2026 current qualification and provider independence
+## Decoupled history provider & adapter resolution
 
-In the **R1.9 candidate**, historical data providers are structurally decoupled from trading broker accounts:
-- **Decoupled Architecture:** `HistoryProviderConfig` (`gammad/broker/account.py`) and `load_history_provider_config` (`gammad/broker/config_loader.py`) allow historical market data to be sourced from any designated provider independently of trading broker sessions.
-- **Provider Rights HOLD:** Synthetic and offline request budget tests pass, but **genuine provider entitlement, expired-option history, and validated 2,000-bar coverage remain HOLD** (`G-R18-05`).
-- **No FYERS Dependency:** The architecture does not rely on FYERS (the user reports FYERS account disabled due to inactivity). Offline development continues with decoupled synthetic feeds.
-
-**Status:** R1.9 candidate architecture qualified offline (56/56 tests PASS); live provider entitlement remains on **HOLD**. See [Project Status](PROJECT_STATUS.md).
+Historical data providers are structurally decoupled from trading broker accounts:
+- **Configured Resolution:** `resolve_configured_adapter(cfg, for_history=True)` in `gammad/broker/config_loader.py` resolves `GAMMA_HISTORY_PROVIDER` independently from `BROKER` (failing closed to `UnauthenticatedBrokerAdapter` with an error log if an explicit provider cannot instantiate), replacing prior hardcoded Dhan adapter instantiations in `gammad/app.py`, `gammad/jobs/mark_levels.py`, `gammad/jobs/build_watchlists.py`, and `gammad/__main__.py`.
+- **Optional `.env` Keys:** `GAMMA_HISTORY_PROVIDER` (explicit history provider id, e.g. `definedge` alongside `BROKER=fyers`), `GAMMA_HISTORY_BARS_LIMIT` (max daily bars horizon), and `FYERS_HISTORY_TIER` (`standard` vs `prime`).
+- **Definedge Stage 1 History (`gammad/broker/definedge/`):** Supports `GAMMA_HISTORY_PROVIDER=definedge` using `DEFINEDGE_API_SESSION_KEY` (`Authorization: <api_session_key>` raw header) against Definedge SDS CSV history (`day` 20y, `minute` 1m 6m resampled on IST session buckets to `1, 5, 15, 60`m), DART `/dart/v1/{limits,quotes}`, and daily post-07:30 IST cached `allmaster.zip`. `mark_levels.run(..., ltp_adapter=...)` splits history fetches (`history_adapter`) from batched `ltp` pricing (`runtime.adapter()`).
+- **FYERS Preflight Guard:** `mark_levels._fyers_history_preflight` raises `FyersHistoryUnavailable` before requesting candles when running under `fyers` `standard` tier with a lookback exceeding the 5-year Standard horizon unless `GAMMA_HISTORY_PROVIDER` (e.g. `definedge`), `FYERS_HISTORY_TIER=prime`, or `GAMMA_HISTORY_BARS_LIMIT<=1100` is configured.
+- **External NSE Helpers & Optional Calendars:** `gammad/jobs/ban_list.py` and `gammad/jobs/results_calendar.py` use bounded `httpx.Client` transports rejecting redirects and oversized responses (`MAX_BYTES`), while `gammad/core/lookahead.py:from_files` returns `()` gracefully when optional `calendars/events_calendar.yaml` is absent.
+- **Live Entitlement Status:** Synthetic and offline unit tests pass; live provider rights, expired-option history, and genuine 2,000-bar external coverage still require authenticated broker validation (`G-R18-05`).
 
 ## Purpose and data contract
 

@@ -4,18 +4,16 @@ The file:line provenance lives in docs/provenance/results_calendar.md (not shipp
 gammad/jobs/ban_list.py @c0f21a7a :136-170 (refused redirects, never raises).
 """
 
-import http.client
 import json
 import os
 import time
-import urllib.error
-import urllib.request
 from dataclasses import replace
 from datetime import date, timedelta
-from http.cookiejar import CookieJar
 from pathlib import Path
 from typing import NamedTuple
 from urllib.parse import urlsplit
+
+import httpx
 
 from gammad.log import get_logger
 from gammad.scanners.shared.results_cal import ResultsCalendar, results_days
@@ -67,31 +65,46 @@ class RateQueue:
         self.last = self.clock()
 
 
-class _NseOnly(urllib.request.HTTPRedirectHandler):
-    def redirect_request(self, req, fp, code, msg, headers, newurl):
-        if not allowed_url(newurl):
-            raise urllib.error.URLError("host refused")
-        return super().redirect_request(req, fp, code, msg, headers, newurl)
-
-
 class Transport:
+    """Cookie-aware HTTPS transport locked to www.nseindia.com using httpx."""
+
     def __init__(self):
-        self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(CookieJar()), _NseOnly())
+        self.client = httpx.Client(
+            timeout=TIMEOUT_S,
+            follow_redirects=False,
+            headers={
+                "User-Agent": UA,
+                "Accept": "application/json,text/html,*/*",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Accept-Encoding": "gzip, deflate, br",
+            },
+        )
+
+    def close(self) -> None:
+        self.client.close()
 
     def __call__(self, url, referer) -> FetchResult:
         try:
-            if not allowed_url(url):
-                return FetchResult(0, b"", "", "host refused")
-            request = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "*/*", "Referer": referer})
-            with self.opener.open(request, timeout=TIMEOUT_S) as response:
-                body = response.read(MAX_BYTES + 1)
-                if len(body) > MAX_BYTES:
-                    return FetchResult(0, b"", "", "oversized")
-                return FetchResult(response.status, body, response.headers.get("Content-Type", ""))
-        except urllib.error.HTTPError as exc:
-            with exc:
-                return FetchResult(exc.code, b"", "")
-        except (urllib.error.URLError, OSError, http.client.HTTPException, ValueError) as exc:
+            target = str(url)
+            for _ in range(3):
+                if not allowed_url(target):
+                    return FetchResult(0, b"", "", "host refused")
+                with self.client.stream("GET", target, headers={"Referer": referer}) as response:
+                    if 300 <= response.status_code < 400 and response.headers.get("location"):
+                        nxt = response.headers["location"]
+                        target = nxt if nxt.startswith("http") else f"{BASE}{nxt}"
+                        continue
+                    content_type = response.headers.get("Content-Type", "")
+                    chunks: list[bytes] = []
+                    size = 0
+                    for chunk in response.iter_bytes():
+                        size += len(chunk)
+                        if size > MAX_BYTES:
+                            return FetchResult(0, b"", content_type, "oversized")
+                        chunks.append(chunk)
+                    return FetchResult(response.status_code, b"".join(chunks), content_type)
+            return FetchResult(0, b"", "", "too many redirects")
+        except (httpx.HTTPError, OSError, ValueError) as exc:
             return FetchResult(0, b"", "", "transport failure: " + type(exc).__name__)
 
 
@@ -105,6 +118,7 @@ def _cached(cache_path: Path) -> ResultsCalendar | None:
 def fetch_results_calendar(day: date, cache_path: Path, *, fetch=None, rate=None,
                            now_ms=None, ahead_days=AHEAD_DAYS) -> ResultsCalendar:
     """Fetch politely; on any failure retain the last good window and flag it stale."""
+    own_fetch = fetch is None
     try:
         fetch = Transport() if fetch is None else fetch
         rate = RateQueue() if rate is None else rate
@@ -144,6 +158,12 @@ def fetch_results_calendar(day: date, cache_path: Path, *, fetch=None, rate=None
                     return cal
     except Exception as exc:  # noqa: BLE001 -- job boundary includes injected transport / clock and cache I/O.
         reason = "transport failure: " + type(exc).__name__
+    finally:
+        if own_fetch and hasattr(fetch, "close"):
+            try:
+                fetch.close()
+            except Exception:
+                pass
     log.warning("Results calendar: %s", reason)
     cached = _cached(cache_path)
     if cached is not None:

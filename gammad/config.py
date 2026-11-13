@@ -728,6 +728,7 @@ BASE_ENV_KEYS: tuple[str, ...] = (
     "GAMMA_HISTORY_PROVIDER",  # R1.9: decoupled historical data provider
     "GAMMA_HISTORY_BARS_LIMIT",  # R1.9: daily bars query limit
     "GAMMA_HISTORY_DAILY_BUDGET",  # R1.9: daily historical request budget
+    "GAMMA_ENFORCE_ACLS",  # R1.9: storage security NTFS ACL enforcement
 )
 LAN_ON_VALUES = frozenset({"1", "true", "yes", "on"})
 SOURCE_ENV_FILE = ".env"

@@ -462,6 +462,46 @@ class TestServeAsyncPreflightIntegration(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(StateRollbackError):
             await serve_async(tray=False, cfg=self.cfg)
 
+    async def test_serve_async_respects_gamma_enforce_acls(self) -> None:
+        from types import MappingProxyType
+        fake_server = MagicMock()
+        fake_server.serve = AsyncMock(return_value=None)
+        fake_server.should_exit = False
+
+        # 1. Enforce ACLs enabled (GAMMA_ENFORCE_ACLS="1")
+        cfg_with_acls = replace(
+            self.cfg,
+            env=replace(self.cfg.env, values=MappingProxyType({"GAMMA_ENFORCE_ACLS": "1"})),
+        )
+        with (
+            patch("gammad.api.server.create_app", return_value=MagicMock()),
+            patch("gammad.api.server.make_server", return_value=fake_server),
+            patch("gammad.app.Runtime.on_token_valid", return_value=None),
+            patch("gammad.app._preflight_storage_guard", wraps=_preflight_storage_guard) as mock_guard,
+        ):
+            rc = await serve_async(tray=False, cfg=cfg_with_acls)
+        self.assertEqual(rc, 0)
+        mock_guard.assert_called_once()
+        _, kwargs = mock_guard.call_args
+        self.assertTrue(kwargs.get("enforce_acls"))
+
+        # 2. Enforce ACLs disabled (GAMMA_ENFORCE_ACLS="0")
+        cfg_without_acls = replace(
+            self.cfg,
+            env=replace(self.cfg.env, values=MappingProxyType({"GAMMA_ENFORCE_ACLS": "0"})),
+        )
+        with (
+            patch("gammad.api.server.create_app", return_value=MagicMock()),
+            patch("gammad.api.server.make_server", return_value=fake_server),
+            patch("gammad.app.Runtime.on_token_valid", return_value=None),
+            patch("gammad.app._preflight_storage_guard", wraps=_preflight_storage_guard) as mock_guard_disabled,
+        ):
+            rc = await serve_async(tray=False, cfg=cfg_without_acls)
+        self.assertEqual(rc, 0)
+        mock_guard_disabled.assert_called_once()
+        _, kwargs_disabled = mock_guard_disabled.call_args
+        self.assertFalse(kwargs_disabled.get("enforce_acls"))
+
 
 if __name__ == "__main__":
     unittest.main()

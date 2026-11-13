@@ -675,9 +675,9 @@ def run(
     threshold = int(cfg.expiry.expiry_dte_threshold)
     carry_cfg: CarryCfg = getattr(cfg, "carry_fwd", None) or CarryCfg()
     if adapter is None:
-        from gammad.broker.dhan import DhanAdapter
+        from gammad.broker.config_loader import resolve_configured_adapter
 
-        adapter = DhanAdapter.from_settings()
+        adapter = resolve_configured_adapter(cfg, for_history=False)
     own_conn = conn is None
     conn = conn or db.connect(cfg.paths.db_path)
     db.migrate(conn)

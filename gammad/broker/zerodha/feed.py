@@ -23,6 +23,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
+import re
 import time
 from collections.abc import Awaitable, Callable, Iterable, Mapping
 from dataclasses import dataclass
@@ -59,6 +60,13 @@ def _wall_ms() -> int:
 
 def _market_hours(now_ms: int) -> bool:
     return session_clock.fo_market_hours(now_ms)
+
+
+_WS_SECRET_RE = re.compile(r"([?&](?:api_key|access_token)=)[^&\s'\"]+", re.IGNORECASE)
+
+
+def _scrub_ws_err(exc: BaseException) -> str:
+    return _WS_SECRET_RE.sub(r"\1<redacted>", str(exc))
 
 
 async def _websockets_connect(url: str) -> WSLike:
@@ -252,7 +260,7 @@ class KiteFeed(FeedBase):
                 got_data = await self._pump(ws)
             except Exception as e:  # noqa: BLE001 -- a dropped socket of any kind means reconnect
                 if not self._stop.is_set():
-                    log.warning("zerodha feed: dropped (%s: %s)", type(e).__name__, e)
+                    log.warning("zerodha feed: dropped (%s: %s)", type(e).__name__, _scrub_ws_err(e))
             finally:
                 self._synced = False
                 self._ws = None

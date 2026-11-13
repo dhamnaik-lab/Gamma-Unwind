@@ -517,28 +517,53 @@ class TestRuntimeIntegration(unittest.TestCase):
 
     def test_serve_async_lifecycle_bootstrap(self) -> None:
         import asyncio
+        from dataclasses import replace
         from unittest.mock import patch
         from gammad.app import serve_async
-
-        captured_runtime = None
 
         class StopServe(Exception):
             pass
 
-        def mock_create_app(rt):
-            nonlocal captured_runtime
-            captured_runtime = rt
-            raise StopServe("bootstrap_ok")
+        def run_bootstrap(cfg_obj):
+            captured = None
 
-        with patch("gammad.api.server.create_app", side_effect=mock_create_app):
-            with self.assertRaises(StopServe):
-                asyncio.run(serve_async(tray=False, cfg=self.cfg))
+            def mock_create_app(rt):
+                nonlocal captured
+                captured = rt
+                raise StopServe("bootstrap_ok")
 
-        self.assertIsNotNone(captured_runtime)
-        self.rts.append(captured_runtime)
-        self.assertIsNotNone(captured_runtime.session_manager)
-        self.assertIsNotNone(captured_runtime.history_config())
-        self.assertTrue(str(captured_runtime.watermark_ledger_path).endswith("watermark.db"))
+            with patch("gammad.api.server.create_app", side_effect=mock_create_app):
+                with self.assertRaises(StopServe):
+                    asyncio.run(serve_async(tray=False, cfg=cfg_obj))
+            self.assertIsNotNone(captured)
+            self.rts.append(captured)
+            return captured
+
+        # 1. No broker configured: app boots cleanly with no default broker, no engines, no history fallback
+        no_broker_cfg = replace(self.cfg, env=replace(self.cfg.env, broker="", values={}))
+        rt_none = run_bootstrap(no_broker_cfg)
+        self.assertIsNotNone(rt_none.session_manager)
+        self.assertIsNone(rt_none.broker_entry)
+        self.assertIsNone(rt_none.history_config())
+        self.assertFalse(rt_none.engines_allowed)
+        self.assertEqual(rt_none.broker_name(), "none")
+        self.assertTrue(str(rt_none.watermark_ledger_path).endswith("watermark.db"))
+
+        # 2. Explicit broker configured: session_manager + history_config + watermark ledger wired
+        zerodha_cfg = replace(
+            self.cfg,
+            env=replace(
+                self.cfg.env,
+                broker="zerodha",
+                values={"KITE_API_KEY": "k1", "KITE_ACCESS_TOKEN": "t1"},
+            ),
+        )
+        rt_z = run_bootstrap(zerodha_cfg)
+        self.assertIsNotNone(rt_z.session_manager)
+        self.assertIsNotNone(rt_z.history_config())
+        self.assertEqual(rt_z.history_config().provider_name, "zerodha")
+        self.assertTrue(rt_z.engines_allowed)
+        self.assertTrue(str(rt_z.watermark_ledger_path).endswith("watermark.db"))
 
 
 class TestConfigLoader(unittest.TestCase):
@@ -684,21 +709,43 @@ class TestConfigLoader(unittest.TestCase):
     def test_empty_array_and_disabled_accounts(self) -> None:
         import json
         from dataclasses import replace
+        from gammad.broker.account import SessionRoutingError
         from gammad.broker.config_loader import load_account_session_manager
 
-        # Empty array
-        cfg_empty = replace(self.cfg, env=replace(self.cfg.env, values={"GAMMA_ACCOUNTS_JSON": "[]"}))
+        # Empty array with no broker / no history provider -> no default broker fallback
+        cfg_empty_no_hist = replace(self.cfg, env=replace(self.cfg.env, broker="", values={"GAMMA_ACCOUNTS_JSON": "[]"}))
+        mgr_empty_no_hist = load_account_session_manager(cfg_empty_no_hist)
+        self.assertEqual(len(mgr_empty_no_hist.list_accounts()), 0)
+        self.assertIsNone(mgr_empty_no_hist.active_account())
+        with self.assertRaises(SessionRoutingError):
+            mgr_empty_no_hist.history_adapter()
+
+        # Empty array with explicit decoupled history provider -> returns unauthenticated adapter without SessionRoutingError
+        cfg_empty = replace(
+            self.cfg,
+            env=replace(
+                self.cfg.env,
+                broker="",
+                values={"GAMMA_ACCOUNTS_JSON": "[]", "GAMMA_HISTORY_PROVIDER": "fyers"},
+            ),
+        )
         mgr_empty = load_account_session_manager(cfg_empty)
         self.assertEqual(len(mgr_empty.list_accounts()), 0)
         self.assertIsNone(mgr_empty.active_account())
-        # history_adapter should return an unauthenticated adapter without raising SessionRoutingError
         self.assertIsNotNone(mgr_empty.history_adapter())
 
-        # All accounts disabled
+        # All accounts disabled with explicit history/broker -> history_adapter remains available
         disabled_accounts = [
             {"account_id": "acc_dis", "broker": "mock_broker_a", "enabled": False}
         ]
-        cfg_dis = replace(self.cfg, env=replace(self.cfg.env, values={"GAMMA_ACCOUNTS_JSON": json.dumps(disabled_accounts)}))
+        cfg_dis = replace(
+            self.cfg,
+            env=replace(
+                self.cfg.env,
+                broker="fyers",
+                values={"GAMMA_ACCOUNTS_JSON": json.dumps(disabled_accounts)},
+            ),
+        )
         mgr_dis = load_account_session_manager(cfg_dis)
         self.assertEqual(len(mgr_dis.list_accounts()), 1)
         self.assertIsNone(mgr_dis.active_account())
@@ -752,12 +799,14 @@ class TestConfigLoader(unittest.TestCase):
             "GAMMA_HISTORY_PROVIDER=mock_hist_env\n"
             "GAMMA_HISTORY_BARS_LIMIT=1200\n"
             "GAMMA_HISTORY_DAILY_BUDGET=8\n"
+            "GAMMA_ENFORCE_ACLS=1\n"
         )
         (repo_dir / ".env").write_text(env_content, encoding="utf-8")
 
         cfg = load_settings(repo_dir)
         self.assertIn("GAMMA_ACCOUNTS_JSON", cfg.env.values)
         self.assertEqual(cfg.env.values.get("GAMMA_HISTORY_PROVIDER"), "mock_hist_env")
+        self.assertEqual(cfg.env.values.get("GAMMA_ENFORCE_ACLS"), "1")
 
         mgr = load_account_session_manager(cfg)
         self.assertEqual(len(mgr.list_accounts()), 1)
@@ -842,6 +891,324 @@ class TestConfigLoader(unittest.TestCase):
         self.assertEqual(mgr.history_config().provider_name, "mock_broker_history")
         hist_adapter = mgr.history_adapter()
         self.assertEqual(getattr(hist_adapter, "broker", ""), "mock_broker_history")
+
+
+class TestNoDefaultBroker(unittest.TestCase):
+    def setUp(self) -> None:
+        from dataclasses import replace
+        from gammad.config import settings
+
+        self.test_dir = tempfile.mkdtemp(prefix="gamma_nobroker_")
+        base_cfg = settings()
+        test_paths = replace(
+            base_cfg.paths,
+            data_dir=Path(self.test_dir),
+            logs_dir=Path(self.test_dir),
+            db_path=Path(self.test_dir) / "test_gamma.db",
+        )
+        self.cfg = replace(
+            base_cfg,
+            paths=test_paths,
+            env=replace(base_cfg.env, broker="", values={}),
+        )
+        self.rts: list[Any] = []
+
+    def tearDown(self) -> None:
+        for rt in self.rts:
+            if getattr(rt, "conn", None) is not None:
+                try:
+                    rt.conn.close()
+                except Exception:
+                    pass
+        shutil.rmtree(self.test_dir, ignore_errors=True)
+
+    def test_registry_resolve_never_defaults_in_any_edition(self) -> None:
+        from gammad.broker import registry
+
+        for ed in ("client", "owner"):
+            with self.subTest(edition=ed):
+                with self.assertRaises(registry.RegistryError):
+                    registry.resolve(None, edition=ed)
+                with self.assertRaises(registry.RegistryError):
+                    registry.resolve("", edition=ed)
+                with self.assertRaises(registry.RegistryError):
+                    registry.resolve("   ", edition=ed)
+
+    def test_config_loader_and_adapter_do_not_default_without_broker(self) -> None:
+        from gammad.broker import registry
+        from gammad.broker.config_loader import (
+            load_account_session_manager,
+            load_history_provider_config,
+            resolve_configured_adapter,
+        )
+
+        self.assertIsNone(load_history_provider_config(self.cfg))
+        mgr = load_account_session_manager(self.cfg)
+        self.assertEqual(mgr.list_accounts(), [])
+        self.assertIsNone(mgr.active_account())
+        with self.assertRaises(registry.RegistryError):
+            resolve_configured_adapter(self.cfg)
+
+    def test_runtime_disables_engines_and_returns_none_broker_without_config(self) -> None:
+        import asyncio
+        from datetime import date
+        from unittest.mock import patch
+        from gammad.app import Runtime
+        from gammad.api import server
+        from gammad.auth.token_watch import TokenWatcher
+
+        rt = Runtime(self.cfg, scanners_089=True)
+        self.rts.append(rt)
+
+        self.assertIsNone(rt.broker_entry)
+        self.assertIsNone(rt.scanner)
+        self.assertFalse(rt.engines_allowed)
+        self.assertEqual(rt.broker_name(), "none")
+
+        # ensure_day / load_day must not instantiate or arm engines (V1 or s089) when engines_allowed is False
+        d = date(2026, 11, 13)
+        rt.conn.execute(
+            "INSERT INTO runs (run_id, kind, status, started_ist, finished_ist, note, spec_version)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?)",
+            ("r_none", "build_watchlists", "ok", "2026-11-13T09:20:00+05:30", "2026-11-13T09:20:05+05:30", "", "1.0"),
+        )
+        rt.conn.execute(
+            "INSERT INTO watchlist (trade_date, list_name, expiry_date, security_id, symbol,"
+            " underlying_security_id, strike, option_type, tag, oi, candidates_n, ref_price,"
+            " zone_edge, run_id, spec_version, lot_size)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (d.isoformat(), "NEAR_WEEKLY_PE", "2026-11-26", 12345, "INFY", 1594, 1500.0, "PE",
+             "MAIN", 1000, 1, 1500.0, 1490.0, "r_none", "1.0", 400),
+        )
+        rt.conn.commit()
+        with patch.object(rt, "is_trading_day", return_value=True):
+            asyncio.run(rt.ensure_day(d))
+        self.assertEqual(len(rt.pool), 0)
+        self.assertIsNotNone(rt.s089)
+        self.assertEqual(len(rt.s089.states), 0)
+
+        # Server status/broker helpers return None in both editions without an active broker
+        for ed in ("client", "owner"):
+            with patch("gammad.edition.edition", return_value=ed), patch("gammad.api.server.is_client", return_value=(ed == "client")):
+                self.assertIsNone(server.broker_entry(rt))
+                self.assertIsNone(server.broker_block(rt))
+                tp = server.token_page(rt)
+                self.assertIsNone(tp["broker"])
+
+        watcher = TokenWatcher(None, rt.conn, rt.router, self.cfg, entry=None)
+        self.assertEqual(watcher.label, "Broker")
+        self.assertEqual(watcher._client_id, "")
+        self.assertEqual(watcher._token, "")
+        self.assertEqual(watcher._creds, {})
+
+    def test_reload_credentials_without_broker_ignores_dhan_fallback(self) -> None:
+        from dataclasses import replace
+        from unittest.mock import MagicMock
+        from gammad.app import Runtime
+
+        adapter = DummyMockAdapter("no_broker_adapter")
+        adapter.set_token = MagicMock()
+        adapter.set_credentials = MagicMock()
+        feed = MagicMock()
+        fresh_cfg = replace(
+            self.cfg,
+            env=replace(
+                self.cfg.env,
+                broker="",
+                dhan_client_id="legacy_cid",
+                dhan_access_token="legacy_tok",
+                values={},
+            ),
+        )
+        rt = Runtime(self.cfg, adapter=adapter, reload_settings=lambda: fresh_cfg)
+        self.rts.append(rt)
+        rt.feed = feed
+
+        import warnings
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            rt.reload_credentials()
+        self.assertFalse(
+            [w for w in caught if issubclass(w.category, RuntimeWarning)],
+            "reload_credentials() must not emit unawaited-coroutine RuntimeWarnings",
+        )
+        adapter.set_token.assert_not_called()
+        adapter.set_credentials.assert_not_called()
+        feed.reload_credentials.assert_not_called()
+
+    def test_token_watcher_entry_none_ignores_dhan_settings(self) -> None:
+        from dataclasses import replace
+        from unittest.mock import MagicMock
+        from gammad.app import Runtime
+        from gammad.auth.token_watch import TokenRejected, TokenWatcher
+
+        rt = Runtime(self.cfg)
+        self.rts.append(rt)
+
+        dhan_env_cfg = replace(
+            self.cfg,
+            env=replace(
+                self.cfg.env,
+                broker="",
+                dhan_client_id="legacy_cid",
+                dhan_access_token="legacy_tok",
+                values={"DHAN_CLIENT_ID": "legacy_cid", "DHAN_ACCESS_TOKEN": "legacy_tok"},
+            ),
+        )
+        fake_adapter = DummyMockAdapter("fake")
+        fake_adapter.client_id = "adapter_cid"
+        fake_adapter.set_credentials = MagicMock()
+        watcher = TokenWatcher(fake_adapter, rt.conn, rt.router, dhan_env_cfg, entry=None)
+        self.assertEqual(watcher.label, "Broker")
+        self.assertEqual(watcher.token_key, "")
+        self.assertEqual(watcher._client_id, "")
+        self.assertEqual(watcher._token, "")
+        self.assertEqual(watcher._creds, {})
+        self.assertIsNone(watcher.token_view()["token_key"])
+        self.assertEqual(watcher.evaluate(None), ("unknown", None, None, "no broker token configured"))
+        with self.assertRaises(TokenRejected):
+            asyncio.run(watcher.update_token("tok_new"))
+        fake_adapter.set_credentials.assert_not_called()
+
+    def test_history_provider_none_treated_as_unconfigured(self) -> None:
+        import json
+        from dataclasses import replace
+        from gammad.broker.config_loader import load_account_session_manager, load_history_provider_config
+
+        for raw in ("none", "NONE", " None "):
+            for broker_val in ("", "fyers"):
+                with self.subTest(raw=raw, broker=broker_val):
+                    cfg_none = replace(
+                        self.cfg,
+                        env=replace(
+                            self.cfg.env,
+                            broker=broker_val,
+                            values={"GAMMA_HISTORY_PROVIDER": raw},
+                        ),
+                    )
+                    self.assertIsNone(load_history_provider_config(cfg_none))
+                    if not broker_val:
+                        mgr = load_account_session_manager(cfg_none)
+                        self.assertEqual(mgr.list_accounts(), [])
+                        with self.assertRaises(SessionRoutingError):
+                            mgr.history_adapter()
+
+        # Mode B with explicit GAMMA_HISTORY_PROVIDER="none" must also leave history unregistered
+        accounts = [{"account_id": "ACC_1", "broker": "mock_broker_a", "is_active": True}]
+        cfg_mode_b_none = replace(
+            self.cfg,
+            env=replace(
+                self.cfg.env,
+                broker="",
+                values={
+                    "GAMMA_ACCOUNTS_JSON": json.dumps(accounts),
+                    "GAMMA_HISTORY_PROVIDER": "none",
+                },
+            ),
+        )
+        mgr_b = load_account_session_manager(cfg_mode_b_none)
+        self.assertIsNotNone(mgr_b.active_account())
+        with self.assertRaises(SessionRoutingError):
+            mgr_b.history_adapter()
+
+    def test_mode_a_unset_broker_registers_explicit_history_provider(self) -> None:
+        from dataclasses import replace
+        from gammad.broker.config_loader import (
+            MockBrokerAdapter,
+            UnauthenticatedBrokerAdapter,
+            load_account_session_manager,
+            resolve_configured_adapter,
+        )
+        from gammad.broker.definedge import DefinedgeAdapter
+
+        # 1. Definedge history with valid key while BROKER=""
+        cfg_ok = replace(
+            self.cfg,
+            env=replace(
+                self.cfg.env,
+                broker="",
+                values={
+                    "GAMMA_HISTORY_PROVIDER": "definedge",
+                    "DEFINEDGE_API_SESSION_KEY": "sess_123",
+                },
+            ),
+        )
+        mgr_ok = load_account_session_manager(cfg_ok)
+        self.assertEqual(mgr_ok.list_accounts(), [])
+        self.assertIsNone(mgr_ok.active_account())
+        self.assertIsNotNone(mgr_ok.history_config())
+        self.assertEqual(mgr_ok.history_config().provider_name, "definedge")
+        hist_ok = mgr_ok.history_adapter()
+        self.assertIsInstance(hist_ok, DefinedgeAdapter)
+        hist_ok.close()
+        resolved = resolve_configured_adapter(cfg_ok, for_history=True)
+        self.assertIsInstance(resolved, DefinedgeAdapter)
+        resolved.close()
+
+        # 2. Definedge history missing key while BROKER="" -> UnauthenticatedBrokerAdapter
+        cfg_missing = replace(
+            self.cfg,
+            env=replace(
+                self.cfg.env,
+                broker="",
+                values={"GAMMA_HISTORY_PROVIDER": "definedge"},
+            ),
+        )
+        with self.assertLogs("gammad.broker.config_loader", level="ERROR"):
+            mgr_missing = load_account_session_manager(cfg_missing)
+        self.assertEqual(mgr_missing.list_accounts(), [])
+        self.assertIsNone(mgr_missing.active_account())
+        self.assertEqual(mgr_missing.history_config().provider_name, "definedge")
+        self.assertIsInstance(mgr_missing.history_adapter(), UnauthenticatedBrokerAdapter)
+        self.assertEqual(mgr_missing.history_adapter().broker, "definedge")
+
+        # 3. Synthetic mock history provider while BROKER=""
+        cfg_mock = replace(
+            self.cfg,
+            env=replace(
+                self.cfg.env,
+                broker="",
+                values={"GAMMA_HISTORY_PROVIDER": "mock_hist"},
+            ),
+        )
+        mgr_mock = load_account_session_manager(cfg_mock)
+        self.assertEqual(mgr_mock.list_accounts(), [])
+        self.assertEqual(mgr_mock.history_config().provider_name, "mock_hist")
+        self.assertIsInstance(mgr_mock.history_adapter(), MockBrokerAdapter)
+
+        # 4. Synthetic mock/paper primary broker with decoupled history provider
+        for primary_broker in ("mock_broker", "paper"):
+            cfg_mock_decoupled = replace(
+                self.cfg,
+                env=replace(
+                    self.cfg.env,
+                    broker=primary_broker,
+                    values={
+                        "GAMMA_HISTORY_PROVIDER": "definedge",
+                        "DEFINEDGE_API_SESSION_KEY": "sess_456",
+                    },
+                ),
+            )
+            mgr_decoupled = load_account_session_manager(cfg_mock_decoupled)
+            self.assertEqual(mgr_decoupled.active_account().identity.broker, primary_broker)
+            self.assertEqual(mgr_decoupled.history_config().provider_name, "definedge")
+            hist_decoupled = mgr_decoupled.history_adapter()
+            self.assertIsInstance(hist_decoupled, DefinedgeAdapter)
+            hist_decoupled.close()
+
+        cfg_paper_mock_hist = replace(
+            self.cfg,
+            env=replace(
+                self.cfg.env,
+                broker="paper",
+                values={"GAMMA_HISTORY_PROVIDER": "mock_hist"},
+            ),
+        )
+        mgr_paper_hist = load_account_session_manager(cfg_paper_mock_hist)
+        self.assertEqual(mgr_paper_hist.active_account().identity.broker, "paper")
+        self.assertEqual(mgr_paper_hist.history_config().provider_name, "mock_hist")
+        self.assertIsInstance(mgr_paper_hist.history_adapter(), MockBrokerAdapter)
+        self.assertEqual(mgr_paper_hist.history_adapter().broker, "mock_hist")
 
 
 if __name__ == "__main__":

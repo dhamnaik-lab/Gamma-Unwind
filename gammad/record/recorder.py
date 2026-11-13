@@ -378,9 +378,15 @@ class Recorder:
         return written
 
     def close_day(self, trade_date: str | None = None) -> None:
-        """Flush everything, then forget the in-memory bars of `trade_date` (or of every date)."""
-        self.flush_db()
-        self.flush_parquet()
+        """Flush DB and Parquet independently, then forget the in-memory bars of `trade_date` (or every date)."""
+        try:
+            self.flush_db()
+        except Exception:  # noqa: BLE001 -- a DB flush error must never abort Parquet flush or bar cleanup
+            log.exception("recorder: close_day flush_db failed")
+        try:
+            self.flush_parquet()
+        except Exception:  # noqa: BLE001 -- preserve close_day memory cleanup even on storage faults
+            log.exception("recorder: close_day flush_parquet failed")
         for d in [trade_date] if trade_date else list(self._bars):
             self._bars.pop(d, None)
             self._bars_dirty.discard(d)

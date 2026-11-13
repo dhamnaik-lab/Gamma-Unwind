@@ -16,6 +16,7 @@ import asyncio
 import hashlib
 import json
 import sqlite3
+import threading
 from contextlib import closing
 from pathlib import Path
 from typing import Any
@@ -60,9 +61,12 @@ class WatermarkStore:
         ):
             raise WatermarkHold("untrusted_ledger_file")
 
-        # Initialize schema
+        self._lock = threading.Lock()
+        self._seen: dict[tuple[str, int], tuple[int, str]] = {}
+
+        # Initialize schema (close immediately so Windows never retains stale -wal locks)
         try:
-            with closing(self._connect()) as con:
+            with self._lock, closing(self._connect()) as con:
                 con.execute("PRAGMA journal_mode=WAL")
                 con.execute("""
                     CREATE TABLE IF NOT EXISTS feed_watermarks (
@@ -83,10 +87,14 @@ class WatermarkStore:
         con.execute("PRAGMA synchronous=FULL")
         return con
 
+    def close(self) -> None:
+        """No-op close hook kept for lifecycle compatibility (connections are scoped per call)."""
+
     def claim(self, t: Tick) -> bool:
         """Durably reserve strictly increasing LTT or a changed payload at the same LTT.
 
-        Rejects absent/unverifiable LTT for NSE FNO instruments.
+        Rejects absent/unverifiable LTT for NSE FNO instruments while allowing sub-second
+        millisecond broker timestamps and receive-stamped non-trade/OI updates bounded by clock skew.
         Returns True if accepted and committed, False if duplicate or regressed.
         """
         if t.segment != "NSE_FNO":
@@ -95,7 +103,7 @@ class WatermarkStore:
 
         ts = int(t.ts_ms)
         recv = int(t.recv_ms)
-        if ts <= 0 or ts == recv or ts % 1000 != 0:
+        if ts <= 0:
             raise WatermarkHold("exchange_ltt_unverifiable")
         if recv - ts > 300_000 or ts - recv > 5_000:
             raise WatermarkHold("exchange_ltt_stale_or_future")
@@ -105,42 +113,56 @@ class WatermarkStore:
 
         value = [t.ltp, t.volume_day, t.oi, t.prev_close]
         digest = hashlib.sha256(json.dumps(value, separators=(",", ":"), allow_nan=False).encode("utf-8")).hexdigest()
+        mem_key = (t.segment, int(t.security_id))
 
         try:
-            with closing(self._connect()) as con:
-                try:
-                    con.execute("BEGIN IMMEDIATE")
-                    previous = con.execute(
-                        """
-                        SELECT ltt_ms, payload_digest FROM feed_watermarks
-                        WHERE namespace=? AND segment=? AND security_id=?
-                        """,
-                        (self.namespace, t.segment, int(t.security_id)),
-                    ).fetchone()
+            with self._lock:
+                cached = self._seen.get(mem_key)
+                if cached is not None:
+                    prev_ltt, prev_digest = cached
+                    if ts < prev_ltt:
+                        return False
+                    if ts == prev_ltt and digest == prev_digest:
+                        return False
 
-                    if previous is not None:
-                        prev_ltt, prev_digest = previous
-                        if ts < prev_ltt:
-                            con.rollback()
-                            return False  # Regression rejected
-                        if ts == prev_ltt and digest == prev_digest:
-                            con.rollback()
-                            return False  # Duplicate tick rejected
+                with closing(self._connect()) as con:
+                    try:
+                        con.execute("BEGIN IMMEDIATE")
+                        previous = con.execute(
+                            """
+                            SELECT ltt_ms, payload_digest FROM feed_watermarks
+                            WHERE namespace=? AND segment=? AND security_id=?
+                            """,
+                            (self.namespace, t.segment, int(t.security_id)),
+                        ).fetchone()
 
-                    con.execute(
-                        """
-                        INSERT INTO feed_watermarks(namespace, segment, security_id, ltt_ms, payload_digest)
-                        VALUES(?, ?, ?, ?, ?)
-                        ON CONFLICT(namespace, segment, security_id) DO UPDATE SET
-                            ltt_ms=excluded.ltt_ms,
-                            payload_digest=excluded.payload_digest
-                        """,
-                        (self.namespace, t.segment, int(t.security_id), ts, digest),
-                    )
-                    con.commit()
-                except BaseException:
-                    con.rollback()
-                    raise
+                        if previous is not None:
+                            prev_ltt, prev_digest = previous
+                            if ts < prev_ltt:
+                                self._seen[mem_key] = (prev_ltt, prev_digest)
+                                con.rollback()
+                                return False  # Regression rejected
+                            if ts == prev_ltt and digest == prev_digest:
+                                self._seen[mem_key] = (prev_ltt, prev_digest)
+                                con.rollback()
+                                return False  # Duplicate tick rejected
+
+                        con.execute(
+                            """
+                            INSERT INTO feed_watermarks(namespace, segment, security_id, ltt_ms, payload_digest)
+                            VALUES(?, ?, ?, ?, ?)
+                            ON CONFLICT(namespace, segment, security_id) DO UPDATE SET
+                                ltt_ms=excluded.ltt_ms,
+                                payload_digest=excluded.payload_digest
+                            """,
+                            (self.namespace, t.segment, int(t.security_id), ts, digest),
+                        )
+                        con.commit()
+                        self._seen[mem_key] = (ts, digest)
+                    except BaseException:
+                        if con.in_transaction:
+                            con.rollback()
+                        raise
         except sqlite3.Error as exc:
             raise WatermarkHold("ledger_write_refused") from exc
 

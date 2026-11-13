@@ -53,10 +53,14 @@ class LiveLadderBook(book.LadderBook):
     """
 
     def __init__(self, *args, **kwargs):
+        self._track_risk = kwargs.get("edition", "owner") == "owner"
         super().__init__(*args, **kwargs)
         self._refresh_risk()
 
     def _refresh_risk(self):
+        if not self._track_risk:
+            self._risk_snapshot = 0, {}
+            return
         # Keyed by each booking's FILL day, the same rule day_pnl_rs sums by (D732 (1)): keyed by the deciding
         # event's date instead, an overnight gap stop would show on neither day.
         days = {book.booked_day(item)
@@ -392,7 +396,12 @@ class ScannerHub:
         if state is None or event.lots <= 0 or event.px is None:
             return None
         qty = event.lots * state.lot_size
-        return (event.px - state.entry_px) * qty - self.costs(state.entry_px, event.px, qty)
+        orders = 1 if event.leg in ("T2", "T3", "T4", "RUNNER") else 2
+        try:
+            cost = self.costs(state.entry_px, event.px, qty, orders=orders)
+        except TypeError:
+            cost = self.costs(state.entry_px, event.px, qty)
+        return (event.px - state.entry_px) * qty - cost
 
     def targets(self) -> sc.TargetsConfig:
         return self._targets
@@ -408,15 +417,26 @@ class ScannerHub:
 
     def alerts(self, day: date) -> Sequence[Mapping[str, Any]]:
         out = []
+        # Map known exit alert timestamps per signal key so exit rows never impersonate entry cards.
+        exit_sent_by_key: dict[str, set[tuple[str, int]]] = {}
+        for (ekey, name), events in self._events.copy().items():
+            chat = dispatch.PERSONAL if name == "OWN" else dispatch.GROUP
+            bucket = exit_sent_by_key.setdefault(ekey, set())
+            for event in tuple(events):
+                if event.alert_sent_ms:
+                    bucket.add((chat, int(event.alert_sent_ms)))
         for key, signal in self._signals.copy().items():
             if signal.trade_date != day:
                 continue
-            # Entry delivery precedes exits in the shared ordered sender. Consume
-            # only the entry plan's successful channel rows, never all later exits.
             plan = dispatch.plan_entry(signal, edition=self.edition, own_targets=self._targets,
                                        group_targets=self.group_targets)
+            sig_id = self.signal_ids.get(key)
+            known_exits = exit_sent_by_key.get(key, set())
+            entry_rows = [
+                r for r in self._deliveries
+                if sig_id is not None and r[0] == sig_id and (r[1], r[2]) not in known_exits
+            ]
             chats = []
-            entry_rows = [r for r in self._deliveries if r[0] == self.signal_ids[key]][:len(plan)]
             for post in plan:
                 sent = next((ms for _, chat, ms, status in entry_rows
                              if chat == post.chat and status == dispatch.SENT), None)

@@ -1,11 +1,13 @@
 # V1 strategy engine: verified mechanics and parity boundaries
 
-## November 2026 parity checkpoint
+## Active V1N & V1 runtime fixes and contracts
 
-In the **R1.9 candidate**, full synthetic V1 strategy lifecycle parity is verified in candidate scope:
-- **Full Lifecycle Integration:** Evaluated end-to-end in `tests/test_r19_runtime_lifecycle.py` from history backfill and feed ticks through V1 entry signal firing, paper position opening, Target 1 stop-trailing, Target 2 exit, and crash quarantine (`G-R18-03` promoted to **BOUNDED PASS**).
-- **Preserved Signal Contracts:** Preserves installed mechanics: E2 is evaluated on closed five-minute bars; E1 breakout fires on forming-bar live ticks when armed. Stops and targets are tracked deterministically without silent strategy mutations.
-- **Release Boundary:** Synthetic verification passes (56/56 tests PASS), but production deployment remains on hold (`R10H_APPLY=HOLD`). See [Project Status](PROJECT_STATUS.md).
+Both the legacy V1 path (`gammad/watch/engine.py`) and the active `V1N` ladder/hub path (`gammad/scanners/`) preserve verified signal semantics while fixing session/bar/persistence edge cases:
+- **Dynamic Session Clocks & Slots:** `gammad/core/day_bar.py` (`_in_session`) and `gammad/app.py` (`plan_slots`, `Runtime.market_open`) derive F&O open/close times dynamically from `session_clock.fo_window` / `fo_close_hm` rather than hardcoding `15:30`.
+- **Feed Watermark & Volume Conservation:** `gammad/broker/durable_watermark.py` accepts `ts == recv` and sub-millisecond timestamps with scoped per-call SQLite connections (`close()` no-op), `gammad/watch/feed.py:safe_put_tick` absorbs `asyncio.QueueFull` / `WatermarkHold` cleanly, and `gammad/watch/bars.py:BarBuilder` preserves cumulative delta volume (`_pending_vol`) from unpriced ticks before the first LTP opens a bar.
+- **`V1N` Zone Stop & Startup OI Carry:** `Runtime._on_bar_close` falls back after `cash_close_ms` (`15:15`) to `und_builders[und].last_ltp` (or prior closed `und_bars`) so `ZONE_STOP` evaluation continues until F&O close. Startup `_prepare_089_body` uses local `backfill_carry` and `ContractBars.merge_today` so live OI carry never regresses.
+- **Charges, Risk Snapshot, Ban Retries & Alerts:** `gammad/scanners/exits/__init__.py` (`book`, `_calc_charges`) and `ScannerHub.event_rs` apply `orders=2` on opening/full exits and `orders=1` on subsequent legs (`T2`+); `LiveLadderBook._refresh_risk` is gated to `edition == "owner"`; `ScannerHub.alerts()` correlates exit timestamps per signal key and safely handles missing `signal_ids`; `Runtime._sw_ban_due` retries failed ban fetches with bounded backoff (`60s` cooldown, max `5` attempts); `Recorder.close_day` isolates `flush_db` errors so `flush_parquet` still runs.
+- **Order Boundary:** Synthetic and unit verification runs offline with `ORDERS = 0`; live broker market data and Telegram delivery qualification remain separate.
 
 **Source authority:** installed `gammad/watch/engine.py`, `gammad/v1/entry.py`, `states.py`, `position.py`, `stops.py`, `exits.py`, `gammad/trade/tracker.py`. Also consult the original setup guide, which describes the scanner in plain words but not every implementation branch.
 

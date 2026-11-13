@@ -356,6 +356,7 @@ DOC_BATCH = {
     "upstox": ("gammad.broker.upstox.wire", "QUOTE_MAX_KEYS"),
     "shoonya": ("gammad.broker.noren.wire", "QUOTE_MAX_IDS"),  # D726: GetQuotes takes one exch/token
     "flattrade": ("gammad.broker.noren.wire", "QUOTE_MAX_IDS"),
+    "definedge": ("gammad.broker.definedge.wire", "QUOTE_MAX_IDS"),
 }
 
 
@@ -638,7 +639,7 @@ PASS, WARN, FAIL = "PASS", "WARN", "FAIL"
 KIND_CONFIG, KIND_PORT, KIND_OTHER = "config", "port", "other"
 NON_SECRET_KEYS = frozenset({"GAMMA_PORT", "GAMMA_TZ", "BROKER"})
 APP_ENV_PREFIXES = ("TELEGRAM_", "DHAN_", "GAMMA_", "KITE_", "ZERODHA_", "UPSTOX_", "ANGEL_", "FYERS_", "KOTAK_",
-                    "GROWW_", "NUVAMA_")  # fmt: skip
+                    "GROWW_", "NUVAMA_", "DEFINEDGE_")  # fmt: skip
 MIN_SECRET_LEN = 6
 URL_TAIL = re.compile(r"(https?://[^/\s\"']+)[/?#][^\s\"']*")  # a bare host:port stays readable
 JWT = re.compile(r"\beyJ[\w-]{4,}\.[\w-]{4,}(?:\.[\w-]+)?")  # most broker access tokens, even if not in .env

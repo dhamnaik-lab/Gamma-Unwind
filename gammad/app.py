@@ -35,8 +35,8 @@ W5 plug points (duck-typed, nothing imported from gammad/auth):
   runtime.on_auth_error(code, msg): the callback handed to the feed.
 
 W12 seams (PLAN-W12 §2, seam ledger):
-  broker   `registry.resolve(BROKER, edition)` -> `broker_entry` (owner + BROKER absent -> dhan; client + absent ->
-           none, the scanner stays idle). Adapter = entry.make_adapter(creds, data_dir); feed =
+  broker   `registry.resolve(BROKER, edition)` -> `broker_entry` (BROKER absent -> none in every edition;
+           the scanner stays idle). Adapter = entry.make_adapter(creds, data_dir); feed =
            entry.make_feed(creds, queue, on_auth_error, adapter=runtime.adapter()) for EVERY broker (R1/R10);
            `capabilities.assess` (runtime.scanner): BLOCKED -> no engines; DEGRADED -> signal snapshot
            feed_poll_s; candle_oi False -> warm-up OI primed from one quotes() snapshot.
@@ -562,7 +562,7 @@ def plan_slots(schedule: ScheduleCfg, v1r: Any = None, day: date | None = None) 
     if v1r is not None:
         refresh = set(v1r_refresh_marks(v1r, tuple(refresh)))
     out: list[Slot] = [Slot(PREOPEN_JOB, pre, "prevclose", PREOPEN_KIND)] if pre else []
-    close_hm = SESSION_CLOSE_HM if day is None else session_clock.fo_close_hm(day)
+    close_hm = session_clock.fo_close_hm(now_ist().date() if day is None else day)
     for t in sorted(marks | builds):
         if t == pre:  # the pre-open slot owns its time
             continue
@@ -650,9 +650,13 @@ def _default_jobs(runtime: Runtime) -> Jobs:
         # T-267 hunk A: bars_sink receives the daily candles the run fetched (the V2 regime step reads them)
         # T-277: base ("auto" = a price-only re-mark when the day has a full run), refresh_hm ("HHMM" mark),
         # prev_trading_day (ref prevclose: the late_bar check)
-        return mark_levels.run(trade_date, ref=ref, adapter=runtime.require_adapter(), cfg=runtime.cfg,  # type: ignore[arg-type]
-                               bars_sink=bars_sink, base=base, refresh_hm=refresh_hm,
-                               prev_trading_day=prev_trading_day)  # fmt: skip
+        hist_adapter = runtime.history_adapter() or runtime.require_adapter()
+        trade_adapter = runtime.adapter() or hist_adapter
+        hist_cfg = runtime.history_config()
+        bars_limit = getattr(hist_cfg, "daily_bars_limit", None)
+        return mark_levels.run(trade_date, ref=ref, adapter=hist_adapter, ltp_adapter=trade_adapter,  # type: ignore[arg-type]
+                               cfg=runtime.cfg, bars_sink=bars_sink, base=base, refresh_hm=refresh_hm,
+                               prev_trading_day=prev_trading_day, daily_bars_limit=bars_limit)  # fmt: skip
 
     def _build(trade_date: date, kind: str, *, run_id: str | None = None, retire: bool = True,
                mark_hm: str | None = None) -> dict[str, Any]:  # fmt: skip
@@ -1043,7 +1047,10 @@ class Runtime:
         self._sw_regime_pending: set[int] = set()
         self._sw_entered: set[tuple[int, str]] = set()
         self._sw_h60_done: tuple[date | None, set[int]] = (None, set())
-        self._sw_ban_tried: date | None = None  # the day of the one start-time ban fetch (_sw_day_inputs)
+        self._sw_ban_tried: date | None = None  # the day when start-time ban fetch succeeded or exhausted retries
+        self._sw_ban_failures: dict[date, tuple[int, int]] = {}
+        self._sw_ban_in_flight: date | None = None
+        self._clock_cut_day: date | None = None
         # T-419 (D480 (3)): the 1-hour zone books of the carried / Still Watching underlyings, BOTH editions (gammad.core:
         # the client package ships no gammad/v2scan): the shipped seed + the topped-up 60-min store + today's closed hours
         # (_sw_h1_feed). The stop zone of a Still Watching entry is picked on them (_sw_levels). _sw_bars_seeded = the
@@ -1193,8 +1200,8 @@ class Runtime:
 
     # ---------------------------------------------------------------- broker (registry, W12)
     def _resolve_broker(self, cfg: Settings) -> BrokerEntry | None:
-        """`.env` BROKER -> registry entry (owner + absent -> dhan). None + ONE error line when the registry
-        refuses (client without BROKER, unknown / broken broker): the API still comes up to say so."""
+        """`.env` BROKER -> registry entry. None + ONE error line when the registry refuses
+        (no BROKER configured, or unknown / broken broker): the API still comes up to say so."""
         from gammad.broker import registry
 
         broker_name = cfg.env.broker or None
@@ -1259,9 +1266,9 @@ class Runtime:
 
     @property
     def engines_allowed(self) -> bool:
-        """False only for a BLOCKED broker: no engines, no signals; levels, lists and ticks still run."""
+        """True only when a configured broker allows engines (False without a broker or when BLOCKED)."""
         sc = self.scanner
-        return sc is None or sc.engines_allowed
+        return sc is not None and sc.engines_allowed
 
     def _scanner_flag(self, name: str) -> Any:
         sc = self.scanner
@@ -1379,7 +1386,12 @@ class Runtime:
     ) -> asyncio.Task[Any]:
         """Keep a reference to a background task. `daemon` = runs for the service's life (loops, consumer,
         recorder); the rest (signal sends, jobs, alerts) are what `flush()` waits for."""
-        task = asyncio.get_running_loop().create_task(coro, name=name)
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            coro.close()
+            raise
+        task = loop.create_task(coro, name=name)
         (self._daemons if daemon else self._tasks).add(task)
         task.add_done_callback(self._task_done)
         return task
@@ -1426,7 +1438,8 @@ class Runtime:
         if not self.is_trading_day(now.date()):
             return False
         hm = f"{now.hour:02d}:{now.minute:02d}"
-        return SESSION_OPEN_HM <= hm < era_for(now.date()).fo_close.strftime("%H:%M")
+        era = era_for(now.date())
+        return era.fo_open.strftime("%H:%M") <= hm < era.fo_close.strftime("%H:%M")
 
     # ---------------------------------------------------------------- day state
     async def ensure_day(self, d: date) -> bool:
@@ -1542,9 +1555,9 @@ class Runtime:
         sw_unds = self.tracker.sw_unds()  # T-419: re-hydrate the open Still Watching trades (ATR + extreme), once a day
         if sw_unds:
             self.spawn(self._sw_seed_bars(d, sorted(sw_unds)), name="sw-seed-bars")
-        if self.v1desk is not None:
+        if self.engines_allowed and self.v1desk is not None:
             await self._v1r_prepare(d)
-        if self.s089 is not None:
+        if self.engines_allowed and self.s089 is not None:
             await self._prepare_089(d, rows)
         return new
 
@@ -2784,8 +2797,7 @@ class Runtime:
         # Include read-side Carry rows retired only by the old ENTERED rule.
         sources = [dict(r) for r in self.conn.execute("SELECT * FROM watchlist WHERE trade_date=?",
                                                      (day.isoformat(),))]
-        if sources and self._sw_ban_tried != day:
-            self._sw_ban_tried = day
+        if sources and self._sw_ban_due(day):
             await self.run_sw_ban_job(day)
         added = hub.prepare(day, sources, at_ms=self._wall_ms())
         self._089_engine_day = day  # P2B-APP-03 delta G1: hub.prepare returned, so its engine runs `day`
@@ -2796,8 +2808,7 @@ class Runtime:
                 master_fn = getattr(self.adapter(), "scrip_master", None)
                 master = await asyncio.to_thread(master_fn) if callable(master_fn) else None
             added += list(hub.v2.morning(day, master, {}))
-            if added and self._sw_ban_tried != day:
-                self._sw_ban_tried = day
+            if added and self._sw_ban_due(day):
                 await self.run_sw_ban_job(day)
         # Open ladders retain subscriptions even when no current list contains their contract.
         active = [p for p in hub.states.values() if not p.closed]
@@ -2891,12 +2902,30 @@ class Runtime:
                                                  min(b.low for b in previous_stocks[und]))
         options = {sid: [self._089_option(b) for b in bars] for sid, bars in today.bars.items()}
         for sid, bars in today.bars.items():
-            for bar in bars:
-                closed = self.series[sid].closed()
-                if not closed or bar.start_ms > closed[-1].ts_ms:
-                    engine_bar = self.carry.bar(sid, bar)
-                    if engine_bar is not None:
-                        self.series[sid].append(engine_bar)
+            series = self.series.setdefault(sid, ContractBars(sid))
+            closed = series.closed()
+            existing_today = series.today()
+            if existing_today and len(closed) > len(existing_today):
+                seed_oi = closed[len(closed) - len(existing_today) - 1].oi
+            else:
+                seed_oi = self.carry.last(sid)
+            seen_ts = {b.ts_ms for b in closed}
+            latest_ts = closed[-1].ts_ms if closed else None
+            backfill_carry = OiCarry()
+            backfill_carry.prime(sid, seed_oi)
+            backfilled = []
+            for bar in sorted(bars, key=lambda b: b.start_ms):
+                engine_bar = backfill_carry.bar(sid, bar)
+                if engine_bar is None:
+                    continue
+                if latest_ts is None or bar.start_ms > latest_ts:
+                    self.carry.prime(sid, engine_bar.oi)
+                    latest_ts = bar.start_ms
+                if bar.start_ms not in seen_ts:
+                    backfilled.append(engine_bar)
+                    seen_ts.add(bar.start_ms)
+            if backfilled:
+                series.merge_today(backfilled)
         v1_added = [r for r in added if r.scanner == "V1N"]
         hub.seed(v1_added, prior, previous_stocks, options, stocks, now)
         if hub.v2 is not None:
@@ -3051,9 +3080,34 @@ class Runtime:
                 out.add(int(und))
         return out
 
+    _SW_BAN_MAX_RETRIES = 5
+    _SW_BAN_RETRY_COOLDOWN_MS = 60_000
+
     def _sw_ban_ok(self, d: date) -> bool:
         ban = self.sw_ban
         return ban is not None and ban.date == d and ban.ok
+
+    def _sw_ban_due(self, d: date) -> bool:
+        if self._sw_ban_ok(d) or self._sw_ban_tried == d or self._sw_ban_in_flight == d:
+            return False
+        count, last_ms = self._sw_ban_failures.get(d, (0, 0))
+        if count >= self._SW_BAN_MAX_RETRIES:
+            self._sw_ban_tried = d
+            return False
+        if count > 0 and (self._wall_ms() - last_ms) < self._SW_BAN_RETRY_COOLDOWN_MS:
+            return False
+        return True
+
+    def _record_sw_ban_failure(self, d: date) -> None:
+        count, _ = self._sw_ban_failures.get(d, (0, 0))
+        count += 1
+        self._sw_ban_failures[d] = (count, self._wall_ms())
+        if len(self._sw_ban_failures) > 5:
+            for old_day in list(self._sw_ban_failures):
+                if old_day != d:
+                    self._sw_ban_failures.pop(old_day, None)
+        if count >= self._SW_BAN_MAX_RETRIES:
+            self._sw_ban_tried = d
 
     def _sw_day_inputs(self, d: date) -> None:
         """After load_day: today's Still Watching inputs, each in the background, only when a CARRY row is watched: the
@@ -3068,8 +3122,7 @@ class Runtime:
             self._sw_entered = entered_options(self.conn)
         except sqlite3.Error:
             log.exception("Still Watching: entered options unreadable; the previous set stays")
-        if self.sw.ban_enabled and not self._sw_ban_ok(d) and self._sw_ban_tried != d:
-            self._sw_ban_tried = d  # one start-time fetch a day; the scheduled job is the other
+        if self.sw.ban_enabled and self._sw_ban_due(d):
             self.spawn(self.run_sw_ban_job(d), name="sw-ban-list")
         self.spawn(self._sw_regime_step(d, unds), name="sw-regime")
         self.spawn(self._sw_zones_for_day(d, unds), name="sw-h60-top-up")
@@ -3100,18 +3153,32 @@ class Runtime:
         if not self.is_trading_day(d):
             return None
         if self._sw_ban_ok(d):
+            self._sw_ban_tried = d
+            self._sw_ban_failures.pop(d, None)
             await self._089_fetch_results(d)
             return dict(self.sw_ban.to_dict())
+        self._sw_ban_in_flight = d
         try:
-            res = await asyncio.to_thread(self._sw_ban_fetch, d)
-        except Exception:  # a fetch fault is an UNKNOWN list (fail closed), never the job
-            log.exception("Still Watching: ban list %s not read", d)
+            try:
+                res = await asyncio.to_thread(self._sw_ban_fetch, d)
+            except Exception:  # a fetch fault is an UNKNOWN list (fail closed), never the job
+                log.exception("Still Watching: ban list %s not read", d)
+                self._record_sw_ban_failure(d)
+                await self._089_fetch_results(d)
+                return None
+            if getattr(res, "ok", False):
+                self.sw_ban = res
+                self._sw_ban_tried = d
+                self._sw_ban_failures.pop(d, None)
+            else:
+                if not self._sw_ban_ok(d):
+                    self.sw_ban = res
+                self._record_sw_ban_failure(d)
             await self._089_fetch_results(d)
-            return None
-        if not self._sw_ban_ok(d):
-            self.sw_ban = res
-        await self._089_fetch_results(d)
-        return dict(res.to_dict())
+            return dict(res.to_dict())
+        finally:
+            if self._sw_ban_in_flight == d:
+                self._sw_ban_in_flight = None
 
     async def _089_fetch_results(self, day):
         if self.s089 is None or self._089_results_day == day:
@@ -3140,7 +3207,7 @@ class Runtime:
                     todo.remove(u)
         if not todo:
             return
-        adapter = self.adapter()
+        adapter = self.history_adapter() or self.adapter()
         if adapter is None:
             log.warning("Still Watching: no broker adapter; %d stock(s) have no Supertrend side today", len(todo))
             return
@@ -3481,7 +3548,8 @@ class Runtime:
         n = 0
         # T-267: the underlyings first, so a timer-closed option bar's V2T entry reads its stock bar of the same slot
         day = getattr(self, "trade_date", None) or datetime.fromtimestamp(now_ms / 1000, IST).date()
-        clock_cut = now_ms // 1000 == v1_hours.last_bar_ms(day) // 1000
+        last_ms = v1_hours.last_bar_ms(day)
+        clock_cut = self._clock_cut_day != day and now_ms >= last_ms
         for ub in list(self.und_builders.values()):
             for bc in ub.on_timer(now_ms + (ub.timer_grace_ms if clock_cut else 0)):
                 self._on_und_close(bc)
@@ -3489,6 +3557,8 @@ class Runtime:
             for bc in builder.on_timer(now_ms + (builder.timer_grace_ms if clock_cut else 0)):
                 n += 1
                 self._on_bar_close(bc, recv_ms=None)
+        if clock_cut:
+            self._clock_cut_day = day
         # T-419: the Still Watching expiry-eve exit (still_watching.eve_exit_hm, 15:15 IST on the session before expiry)
         # rides the bar timer: no extra job id, and a late wake still exits (on_clock fires at / after the deadline)
         try:
@@ -3588,7 +3658,22 @@ class Runtime:
                 self._089_wait[sid] = -1
                 self.spawn(self._089_backfill(sid, b.end_ms), name="s089-backfill")
             und = self.meta[sid].underlying_security_id
-            stocks = tuple(c.close for c in self.und_bars.get(und, ()) if c.ts_ms == b.start_ms)
+            und_bars = self.und_bars.get(und, ())
+            stocks = tuple(c.close for c in und_bars if c.ts_ms == b.start_ms)
+            if not stocks:
+                ub = self.und_builders.get(und)
+                if (
+                    self.trade_date is not None
+                    and b.start_ms >= v1_hours.cash_close_ms(self.trade_date)
+                    and ub is not None
+                    and ub.last_ltp is not None
+                    and ub.last_ltp > 0
+                ):
+                    stocks = (float(ub.last_ltp),)
+                else:
+                    prior = [c for c in und_bars if c.ts_ms <= b.start_ms]
+                    if prior:
+                        stocks = (float(prior[-1].close),)
             atr = atr_series([self._089_option(x) for x in series.closed()], self.s089.engine.p)
             self.s089.option_bar(sid, self._089_option(b), LadderBar(
                 b.start_ms, b.open, b.high, b.low, b.close, b.oi,
@@ -4062,7 +4147,7 @@ class Runtime:
             from gammad.v2scan.regime import compute_regimes, upsert_regimes  # lazy: owner-only package (AM7)
 
             try:
-                adapter = self.require_adapter()
+                adapter = self.history_adapter() or self.require_adapter()
                 regs = await asyncio.to_thread(compute_regimes, adapter, unds, d, self.cfg)
             except Exception as exc:  # noqa: BLE001 -- fail closed: no regime, no V2 ENTRY, never the start
                 log.warning("v2 regime %s: not computed at start (%s); V2 stays capped", d, type(exc).__name__)
@@ -5648,13 +5733,13 @@ class Runtime:
         return self._reload_settings()
 
     def broker_name(self) -> str:
-        """The broker this install runs (the registry entry's key, else the .env value, else Dhan: the owner's default)."""
+        """The broker this install runs (the registry entry's key, else the .env value, else 'none')."""
         entry = self.broker_entry
         for attr in ("key", "name", "id"):
             v = getattr(entry, attr, None)
             if isinstance(v, str) and v:
                 return v
-        return self.cfg.env.broker or "dhan"
+        return self.cfg.env.broker or "none"
 
     def reload_credentials(self) -> None:
         """Re-read settings (.env) and hand the new token to the adapter and the live feed."""
@@ -5676,14 +5761,13 @@ class Runtime:
             if self.feed is not None:
                 self.feed.reload_credentials(creds)
         else:
-            if adapter is not None and hasattr(adapter, "set_token"):
-                adapter.set_token(fresh.env.dhan_access_token)
-            if self.feed is not None:
-                self.feed.reload_credentials(fresh.env.dhan_client_id, fresh.env.dhan_access_token)
+            log.debug("reload_credentials: no broker configured; skipping adapter/feed credential update")
         self._feed_disabled = None
         log.info("credentials reloaded")
-        with contextlib.suppress(RuntimeError):
-            self.spawn(self.refresh_token_health(), name="token-refresh")
+        if entry is not None:
+            with contextlib.suppress(RuntimeError):
+                asyncio.get_running_loop()
+                self.spawn(self.refresh_token_health(), name="token-refresh")
 
     # ---------------------------------------------------------------- controls
     def set_paused(self, paused: bool) -> None:

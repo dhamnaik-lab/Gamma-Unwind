@@ -10,8 +10,8 @@ This inventory describes the verified dashboard API routes. The **R1.9 candidate
 
 | Method | Route | Intended use |
 |---|---|---|
-| GET | `/api/brokers/catalog` | Safe broker registry metadata; no configured secret values |
-| POST | `/api/brokers/stage` | Local-only BROKER staging in `.env`, restart required; control/origin restrictions |
+| GET | `/api/brokers/catalog` | Safe broker registry metadata; no configured secret values (legacy `Broker connections` panel removed from `#/token`) |
+| POST | `/api/brokers/stage` | Disabled (`409`) by R1.4 middleware; use `/api/broker-manager/switch/{name}` |
 | GET | `/api/token` | Broker/token status and event summary |
 | POST | `/api/token` | Token update route; *sensitive control* |
 | POST | `/api/token/login` | Exact-field client login; JSON and custom control header |
@@ -54,14 +54,23 @@ This inventory describes the verified dashboard API routes. The **R1.9 candidate
 | POST | `/api/send` | Manual alert/notification path; **not** a broker order path |
 | POST | `/api/service/stop` | Local service stop control |
 
-The server also has a catch-all dashboard route (`/{full_path:path}`), which is not a general-purpose API endpoint. Additional provider-specific or later R5 routes mentioned in previous development discussions must **not** be assumed installed unless present in the current verified source.
+## Broker Manager (R1.4 + R1.5 local-only routes)
+
+| Method | Route | Intended use |
+|---|---|---|
+| GET | `/api/broker-manager/status` | Safe status, DPAPI profile completeness, R1.5 verification flags & `can_stage` |
+| GET | `/api/broker-manager/login-url/{name}` | Domain-allowlisted OAuth authorization URL for an inactive broker |
+| POST | `/api/broker-manager/profile/{name}` | Store inactive broker credentials in encrypted DPAPI vault |
+| POST | `/api/broker-manager/login/{name}` | Complete OAuth / field exchange for an inactive broker |
+| POST | `/api/broker-manager/disconnect/{name}` | Clear an inactive broker profile with `DISCONNECT <BROKER>` confirmation |
+| POST | `/api/broker-manager/r15/verify-auth/{broker}` | Opt-in read-only profile + quote probe across all 11 brokers |
+| POST | `/api/broker-manager/switch/{name}` | R1.5-verified `.env` backup (`data/backups/`) & broker staging (restart required) |
+| POST | `/api/broker-manager/r15/activate/{broker}` | R1.5-gated activation entrypoint delegating to `gamma_r14.switch` |
+| GET | `/api/broker-manager/r15/status` | In-memory R1.5 session & feed proof summary (never reads secrets) |
 
 ## Security and testing rules
 
-- Use same-origin and appropriate `X-Gamma-Control: 1` controls where handlers require them; do not blindly attach this header to every route and assume that satisfies all access checks.
-- `POST /api/brokers/stage` explicitly checks loopback origin, JSON content type, broker registry membership and requires a restart. Do not call it in a documentation validation run.
-- `POST /api/token/login` avoids echoing typed values; never print request bodies or access tokens to troubleshoot errors.
-- Status, manual-send, API export, token and service-control handlers can expose or change sensitive state. No automated calls are authorized by this document.
-- Review the exact installed handler before asserting a response schema, side effect, quota or permission. Do not infer that an endpoint supports expired-option historical acquisition.
-
-**Read-only documentation only.** No new routes are created by this package.
+- **SPA mutating routes** (`POST /api/token`, `/api/jobs/{name}/run`, `/api/alerts/pause`, `/api/send`, `/api/mute`) use `_guard_spa_post`: requires `Content-Type: application/json`, blocks `Sec-Fetch-Site: cross-site`, and validates same-origin loopback `Origin` without requiring `X-Gamma-Control: 1`. Note `My Watchlist` (`/api/user-symbols`) displays *"Saved draft (scanner filtering inactive)"* when saved.
+- **Control & Broker Manager routes** (`POST /api/service/stop`, `/api/user-symbols`, `/api/v2-scanner`, `/api/broker-manager/*`) enforce `gamma_r15.local_request_ok` / exact loopback server port matching (`scope["server"]` or `GAMMA_PORT`), reject proxy headers (`lan.is_remote`), require `Origin` matching `Host`, and require `X-Gamma-Control: 1` where documented.
+- `POST /api/brokers/stage` is explicitly disabled (`409`) by R1.4 middleware in favor of verified R1.4/R1.5 switching.
+- `POST /api/token/login` and WebSocket feed error logs (`_scrub_ws_err`) redact secrets; never print request bodies or access tokens when troubleshooting.

@@ -286,18 +286,18 @@ class TokenWatcher:
         self.warn_lo = warn[-1]
         # T-346 (D386 (2)): the client ladder (1 h / expired) and calm card words; None = this install's edition
         self.client: bool = _edition.is_client() if client is None else bool(client)
-        self.entry = entry  # a gammad.broker.capabilities.BrokerEntry, or None = the legacy Dhan path
-        self.token_key: str = entry.token_key if entry is not None else ENV_KEY
-        self.label: str = entry.label if entry is not None else "Dhan"
+        self.entry = entry  # a gammad.broker.capabilities.BrokerEntry, or None = neutral unconfigured state
+        self.token_key: str = entry.token_key if entry is not None else ""
+        self.label: str = entry.label if entry is not None else "Broker"
         if entry is not None:
             src = creds if creds is not None else _env_creds(entry, self.env_path)
             self._creds: dict[str, str] = {k: (src.get(k) or "").strip() for k in entry.key_names}
             self._client_id = ""
             self._token = self._creds.get(self.token_key, "")
         else:
-            self._client_id = settings.env.dhan_client_id or str(getattr(adapter, "client_id", "") or "")
-            self._token = settings.env.dhan_access_token
-            self._creds = {LEGACY_CLIENT_ID_KEY: self._client_id, ENV_KEY: self._token or ""}
+            self._client_id = ""
+            self._token = ""
+            self._creds = {}
 
         self.level: str | None = None
         self.validity_ist: str | None = None
@@ -408,7 +408,8 @@ class TokenWatcher:
     def evaluate(self, health: TokenHealth | None) -> tuple[str, str | None, float | None, str]:
         """(level, validity_iso, hours_left, reason) for one probe result. None = no token."""
         if health is None:
-            return LEVEL_UNKNOWN, None, None, f"no {self.token_key} configured"
+            reason = f"no {self.token_key} configured" if self.token_key else "no broker token configured"
+            return LEVEL_UNKNOWN, None, None, reason
         validity = parse_validity(health.validity_ist)
         if validity is not None:
             hours = (validity - self._clock()).total_seconds() / 3600.0
@@ -653,7 +654,7 @@ class TokenWatcher:
         if self.entry is not None:
             adapter.set_credentials(dict(creds))
         else:
-            adapter.set_credentials(self._client_id, creds.get(ENV_KEY, ""))
+            return
 
     def _probe(self, token: str | Mapping[str, str]) -> TokenHealth:
         """Probe the broker with the NEW token (or {key: value} updates) on the live adapter, then put
@@ -697,6 +698,8 @@ class TokenWatcher:
         async with self._lock():
             if source == "env" and new_token == self._token:
                 return self.snapshot()  # our own .env write echoing back through the watcher
+            if self.entry is None or not self.token_key:
+                raise TokenRejected("no broker configured")
             if not new_token:
                 raise TokenRejected("empty token")
             # W14 L2: a broker error echoing the pasted token must never reach token_events, the log or the error
@@ -957,7 +960,7 @@ class TokenWatcher:
                 url = cl.login_url(dict(self._creds))
             except Exception as exc:  # noqa: BLE001 -- a broken URL builder must not break the page
                 log.warning("%s login_url failed: %s", self.label, type(exc).__name__)
-        return {"token_key": self.token_key, "token_masked": mask(self._token), "login_url": url}
+        return {"token_key": self.token_key or None, "token_masked": mask(self._token), "login_url": url}
 
     async def login_with_fields(
         self, fields: Mapping[str, Any], *, source: str = "login", transport: Any = None

@@ -1,0 +1,24 @@
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+*.bak
+
+# Runtime data, databases, locks, backups, and caches
+data/*.db*
+data/*.sqlite*
+data/*.csv
+data/state_generation.json
+data/tray.lock
+data/backups/
+data/parquet/
+data/quarantine/
+logs/
+
+# Python / tooling artifacts
+__pycache__/
+*.pyc
+*.pyo
+*$py.class
+.pytest_cache/
+.venv/

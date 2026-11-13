@@ -512,8 +512,8 @@ def ws_visible(msg: Mapping[str, Any]) -> bool:
 
 
 def broker_block(runtime: Any) -> dict[str, Any] | None:
-    """`/api/status.broker`: registry.describe(runtime.broker_entry); without one, the registry's own
-    resolution of an absent BROKER (owner -> dhan, client -> none). Never raises."""
+    """`/api/status.broker`: registry.describe(runtime.broker_entry); None when no broker is
+    configured. Never raises."""
     entry = broker_entry(runtime)
     if entry is None:
         return None
@@ -566,7 +566,7 @@ def broker_entry(runtime: Any) -> Any:
         from gammad.broker import registry
 
         return registry.resolve(None)
-    except Exception:  # noqa: BLE001 -- client with no BROKER / a broken registry: no broker block
+    except Exception:  # noqa: BLE001 -- no BROKER configured / broken registry: no broker block
         return None
 
 
@@ -862,7 +862,7 @@ class RuntimeAPI(Protocol):
     """What the API needs from the supervisor (gammad.app.Runtime implements it; tests fake it).
 
     OPTIONAL (read with getattr; absent = the fallback in brackets):
-      broker_entry: BrokerEntry            [registry.resolve(None): owner -> dhan, client -> none]
+      broker_entry: BrokerEntry            [registry.resolve(None) -> None when BROKER is unset]
       token_login(fields) -> awaitable     [POST /api/token/login answers 501]  (TokenWatcher.attach sets it)
       token_view() -> {token_key, token_masked, login_url}  [nulls]            (TokenWatcher.attach sets it)
       data_dir: Path                       [db_path.parent]  -- where POST /api/service/stop writes STOP
@@ -1845,13 +1845,27 @@ def create_app(runtime: RuntimeAPI, *, dist_dir: Path | None = None) -> Any:
         return {"bars": live_bars or recorded, "oi_series": oi, "engine": engine, "contract": named,
                 "bars_source": source}  # fmt: skip
 
+    def _guard_spa_post(request: Request) -> None:
+        from gammad.api import lan
+
+        ctype = request.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+        if ctype != "application/json":
+            raise HTTPException(status_code=415, detail="Content-Type application/json required")
+        fetch_site = (request.headers.get("sec-fetch-site") or "").strip().lower()
+        if fetch_site in ("cross-site", "same-site"):
+            raise HTTPException(status_code=403, detail="cross-site request refused")
+        if request.headers.get("origin"):
+            origin_ok = lan._origin_ok(request.scope) if lan.is_remote(request.scope) else lan._loopback_origin_ok(request.scope)
+            if not origin_ok:
+                raise HTTPException(status_code=403, detail="cross-origin request refused")
+
     @app.get("/api/token")
     def token_get() -> dict[str, Any]:
         with _read(runtime) as conn:
             events = query_token_events(conn)
         return {**runtime.token_status(), "events": events, **token_page(runtime), "chats": chats_block(runtime)}
 
-    @app.post("/api/token")
+    @app.post("/api/token", dependencies=[Depends(_guard_spa_post)])
     async def token_post(access_token: str = Body(..., embed=True, min_length=1)) -> Any:
         updater = runtime.token_updater
         if updater is None:
@@ -1972,7 +1986,7 @@ def create_app(runtime: RuntimeAPI, *, dist_dir: Path | None = None) -> Any:
         log.info("service stop requested from the dashboard (%s written)", path.name)
         return JSONResponse({"stopping": True}, status_code=202)
 
-    @app.post("/api/jobs/{name}/run")
+    @app.post("/api/jobs/{name}/run", dependencies=[Depends(_guard_spa_post)])
     async def job_run(name: str, body: Annotated[dict[str, Any] | None, Body()] = None) -> dict[str, Any]:
         if name not in JOB_NAMES:
             raise HTTPException(status_code=404, detail=f"unknown job {name!r}")
@@ -1984,7 +1998,7 @@ def create_app(runtime: RuntimeAPI, *, dist_dir: Path | None = None) -> Any:
             raise HTTPException(status_code=422, detail=str(exc)) from None
         return {"run_id": run_id}
 
-    @app.post("/api/alerts/pause")
+    @app.post("/api/alerts/pause", dependencies=[Depends(_guard_spa_post)])
     def alerts_pause(paused: bool = Body(..., embed=True)) -> dict[str, Any]:
         runtime.set_paused(paused)
         return status_body(runtime, build=build)
@@ -2028,7 +2042,7 @@ def create_app(runtime: RuntimeAPI, *, dist_dir: Path | None = None) -> Any:
     # -- D42-D44: manual sends, mutes, previews, copy/export. The runtime-backed routes are `async def`
     #    so they run on the loop that owns the router's SQLite connection (sqlite3 objects are thread-bound).
 
-    @app.post("/api/send")
+    @app.post("/api/send", dependencies=[Depends(_guard_spa_post)])
     async def send(
         request: Request,
         kind: str = Body(..., embed=True),
@@ -2068,7 +2082,7 @@ def create_app(runtime: RuntimeAPI, *, dist_dir: Path | None = None) -> Any:
             raise HTTPException(status_code=404, detail=str(exc)) from None
         return {"html": parts[0], "parts": parts, "dest": dest}
 
-    @app.post("/api/mute")
+    @app.post("/api/mute", dependencies=[Depends(_guard_spa_post)])
     async def mute(
         security_id: int = Body(..., embed=True),
         muted: bool = Body(..., embed=True),

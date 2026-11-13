@@ -72,10 +72,10 @@ def _cmd_levels(args: argparse.Namespace) -> int:
 
 
 def _cmd_universe() -> int:
-    from gammad.broker.dhan import DhanAdapter
+    from gammad.broker.config_loader import resolve_configured_adapter
     from gammad.jobs.mark_levels import load_universe
 
-    rows = load_universe(DhanAdapter.from_settings())
+    rows = load_universe(resolve_configured_adapter(for_history=False))
     for r in rows:
         log.info("%-14s eq_id=%-8d lot=%d", r.symbol, r.eq_security_id, r.lot_size)
     log.info("universe count: %d", len(rows))
@@ -83,7 +83,8 @@ def _cmd_universe() -> int:
 
 
 def _cmd_zones(args: argparse.Namespace) -> int:
-    from gammad.broker.dhan import DhanAdapter, candle_date
+    from gammad.broker.config_loader import resolve_configured_adapter
+    from gammad.broker.dhan import candle_date
     from gammad.config import settings
     from gammad.core.calendar import is_trading_day
     from gammad.core.day_bar import with_day_bar
@@ -92,7 +93,7 @@ def _cmd_zones(args: argparse.Namespace) -> int:
     from gammad.jobs.mark_levels import fetch_bars
 
     cfg = settings()
-    adapter = DhanAdapter.from_settings()
+    adapter = resolve_configured_adapter(cfg, for_history=True)
     sym = args.symbol.strip().upper()
     sid = adapter.scrip_master().eq_security_id(sym)
     if sid is None:

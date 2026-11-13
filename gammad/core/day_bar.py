@@ -45,7 +45,8 @@ def day_ts_ms(day: date) -> int:
 
 def _in_session(ts_ms: int, day: date) -> bool:
     dt = datetime.fromtimestamp(ts_ms / 1000, IST)
-    return dt.date() == day and SESSION_OPEN <= dt.time() < session_clock.fo_window(day)[1]
+    fo_open, fo_close = session_clock.fo_window(day)
+    return dt.date() == day and fo_open <= dt.time() < fo_close
 
 
 def aggregate_day_bar(candles: Iterable[Candle], day: date) -> Candle | None:

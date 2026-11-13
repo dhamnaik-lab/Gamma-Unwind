@@ -139,6 +139,7 @@ class BarBuilder:
         self._forming: dict[int, Bar | None] = dict.fromkeys(self.tfs)
         # Earliest start a new bar may take (end of the last closed bar) -- no bar is ever reopened.
         self._floor: dict[int, int] = dict.fromkeys(self.tfs, self.open_ms)
+        self._pending_vol: dict[int, int] = dict.fromkeys(self.tfs, 0)
         self._cum_volume: int | None = None
         self.oi_peak_today: int | None = None
         self.oi_now: int | None = None
@@ -245,10 +246,14 @@ class BarBuilder:
         has_price = ltp is not None and ltp > 0
         if bar is None:
             if not has_price:
-                return closed  # an OI-only update with no price cannot open a bar; oi_now already kept
+                if delta > 0:
+                    self._pending_vol[tf] += delta
+                return closed  # an OI-only update with no price cannot open a bar; preserve delta for next priced tick
             assert ltp is not None
             prev = self._closed[tf][-1].oi if self._closed[tf] else None
-            self._forming[tf] = Bar(start, tf, ltp, ltp, ltp, ltp, delta, oi if oi is not None else prev)
+            total_vol = delta + self._pending_vol.pop(tf, 0)
+            self._pending_vol[tf] = 0
+            self._forming[tf] = Bar(start, tf, ltp, ltp, ltp, ltp, total_vol, oi if oi is not None else prev)
             return closed
         if has_price:
             assert ltp is not None

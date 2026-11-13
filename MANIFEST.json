@@ -26,13 +26,14 @@
     "kotak",
     "groww",
     "shoonya",
-    "flattrade"
+    "flattrade",
+    "definedge"
   ],
   "files": [
     {
       "path": ".env.example",
-      "sha256": "6d336dd4880624020c58ae215c5ec1151c58549170163cd61dec42e83f2054b6",
-      "size": 5182
+      "sha256": "f1cb47278948206aae8e92ec3dd624c11de6bc2ee3e423ff4081d6b44d43bd7b",
+      "size": 5775
     },
     {
       "path": "Check Setup.cmd",
@@ -43,11 +44,6 @@
       "path": "EDITION",
       "sha256": "0c98ae374b72eaf38c61ec07f3b731b50d0b595689a44d1b6750659b47b74421",
       "size": 7
-    },
-    {
-      "path": "MANIFEST.json",
-      "sha256": "f1142ccbc77d94be22524ed6ddce48155ad2065dc852b69b4c1ce156d6b898c7",
-      "size": 728174
     },
     {
       "path": "README.txt",
@@ -110,6 +106,31 @@
       "size": 162420
     },
     {
+      "path": "dashboard/dist/assets/gamma-r10c1-selections.css",
+      "sha256": "6b0f215e17d1c243fe7a3303de98f48e4a5dbb7653a9f0541e27d01705ecd811",
+      "size": 2893
+    },
+    {
+      "path": "dashboard/dist/assets/gamma-r10c1-selections.js",
+      "sha256": "42c310d982538ff128d2dd77feedb252e07da827f961702c9937c0125bd82873",
+      "size": 9623
+    },
+    {
+      "path": "dashboard/dist/assets/gamma-r14-manager.css",
+      "sha256": "3ecfe0c9447d99e74aa3f3badd3c51467eda2f45f5956870d77b224896850c48",
+      "size": 2093
+    },
+    {
+      "path": "dashboard/dist/assets/gamma-r14-manager.js",
+      "sha256": "1c67bfd3040e75c3ef0dabb79aaf8fe670e994d6c7fbbc53d09ac5903f799c6e",
+      "size": 11501
+    },
+    {
+      "path": "dashboard/dist/assets/gamma-r15.js",
+      "sha256": "0cb54b6409aba8e00f110c279141ab4a16e8eacca2c6baacf3008c7ef9afba52",
+      "size": 3419
+    },
+    {
       "path": "dashboard/dist/assets/index-CFJZP54j.js",
       "sha256": "f03eb83a692870da7fa0699dd3ed883e66b61739563bd6a33f59fbe782378a9d",
       "size": 208622
@@ -118,6 +139,26 @@
       "path": "dashboard/dist/assets/index-DhMXtRuC.css",
       "sha256": "ea4f115bb9a92b8e4f92a578a06d7b233e1bb975018a812de4d00e137a342eab",
       "size": 74587
+    },
+    {
+      "sha256": "ec12ba7ad7f44d8e18937d8783272a464070c2deebdc1d2cf45a17ea0db6874e",
+      "size": 208703,
+      "path": "dashboard/dist/assets/index-GU-R11.js"
+    },
+    {
+      "sha256": "c4c3833678bcba42a7c8a845b919102c1a24cf4d0104a642e3466657d5bbb190",
+      "size": 213037,
+      "path": "dashboard/dist/assets/index-GU-R12.js"
+    },
+    {
+      "path": "dashboard/dist/assets/index-GU-R13.js",
+      "sha256": "212d2d3445f3d6831e0092ac840d2836ad6df397ab305333f58b39cee3a7f49e",
+      "size": 213746
+    },
+    {
+      "path": "dashboard/dist/assets/index-GU-R14.js",
+      "sha256": "e1f412ff29dcf4dfd7f576764ed4a986536f5945f337018cf92bf3474306ba81",
+      "size": 209137
     },
     {
       "path": "dashboard/dist/assets/react-D_4Fchdq.js",
@@ -161,8 +202,8 @@
     },
     {
       "path": "gammad/__main__.py",
-      "sha256": "dc2fadb977ccedc3f6ecfa86802e6b350db10e05253e3becdc18fe0ebee4d346",
-      "size": 9697
+      "sha256": "0b979c52444be49bc94ff5a65cc969a8ed59f8ce5d82880753844236c37d4310",
+      "size": 9819
     },
     {
       "path": "gammad/alerts/__init__.py",
@@ -216,8 +257,8 @@
     },
     {
       "path": "gammad/api/broker_selection.py",
-      "sha256": "e2e64df6935d5757bac6daa31eee5950054d044886c60871305df932a3c11f40",
-      "size": 1766
+      "sha256": "5f894a327688a6ab2a5bf046caabba54716e34685bc2b5d2e87c16f7e5002a5f",
+      "size": 3254
     },
     {
       "path": "gammad/api/build_info.py",
@@ -241,8 +282,8 @@
     },
     {
       "path": "gammad/api/server.py",
-      "sha256": "3894c83a46b04f6d5573a0020195b74825705397aaf8ecc4a85993f821108345",
-      "size": 120991
+      "sha256": "f114433a9b068aaf363f8a04d5f3e2ad83a399166e874e26f9c0fbdf51b59d0a",
+      "size": 121962
     },
     {
       "path": "gammad/api/session_hours.py",
@@ -251,8 +292,8 @@
     },
     {
       "path": "gammad/app.py",
-      "sha256": "5dbc59d45cfe35cd0b5b0f10038316e8d866b1f3c5b7d7b4a3a73951d58bd88c",
-      "size": 344829
+      "sha256": "ec232b72b2b1fe8246aaee6b05a13a241fa2d95b31fdd4dc2b3021be25ea7d35",
+      "size": 356715
     },
     {
       "path": "gammad/auth/oauth.py",
@@ -261,8 +302,8 @@
     },
     {
       "path": "gammad/auth/token_watch.py",
-      "sha256": "3faeac97a736c28790694864ede36f828626973acab84d6ff29e7a76dfeac80d",
-      "size": 53167
+      "sha256": "0ce359525d6b8503f979d1ceb5848c6655f90772e1542a23fbc7fcb1bfe91c08",
+      "size": 53151
     },
     {
       "path": "gammad/auth/totp.py",
@@ -318,6 +359,21 @@
       "path": "gammad/broker/capabilities.py",
       "sha256": "81f5d7db594d8511c807681082005552490c82675a6dca8ff51ac32e16ec303e",
       "size": 19053
+    },
+    {
+      "path": "gammad/broker/definedge/__init__.py",
+      "sha256": "ef906f1b84e11a8e5ca1e60e3c6b84fa08f05a032a1443100fb64a7fbcf24b77",
+      "size": 3426
+    },
+    {
+      "path": "gammad/broker/definedge/adapter.py",
+      "sha256": "4b4e4ade063dae1c4b69e8d8ad6901e6788444aeaffb33589b776ed94a4688ee",
+      "size": 15408
+    },
+    {
+      "path": "gammad/broker/definedge/wire.py",
+      "sha256": "bee89ba85af81c95cb374b8a5e91b5053940e9e6b7eb3e16f2d3bcaf059873b7",
+      "size": 18340
     },
     {
       "path": "gammad/broker/dhan.py",
@@ -393,6 +449,16 @@
       "path": "gammad/broker/fyers/wire.py",
       "sha256": "fd95a48a94e4a6a7b13f2d883cb4b4b96ccde1527c3644e7c4921661be5b7316",
       "size": 16693
+    },
+    {
+      "path": "gammad/broker/gamma_r14.py",
+      "sha256": "e2318367f2be51874ac474b4d84a961347740432e8300d00985fe74f33cc9c12",
+      "size": 22632
+    },
+    {
+      "path": "gammad/broker/gamma_r15.py",
+      "sha256": "a444f774c4b6364a452e68ac2db40f07bb4e105abfaca3394196460dfe620365",
+      "size": 18296
     },
     {
       "path": "gammad/broker/groww/__init__.py",
@@ -581,8 +647,8 @@
     },
     {
       "path": "gammad/broker/registry.py",
-      "sha256": "c60d52050bc6699484c20a04ee829930913af7a7939927601f917b399235b748",
-      "size": 13317
+      "sha256": "88b79d179d0e619afbf6d09c4829e66f375cc628d4f08086f6dd19433daac78c",
+      "size": 13187
     },
     {
       "path": "gammad/broker/resilience.py",
@@ -641,8 +707,8 @@
     },
     {
       "path": "gammad/broker/zerodha/feed.py",
-      "sha256": "0baf26c6f73678a3259e64c50f0d94ae9fa556b98500fda8319254c05febf52d",
-      "size": 14737
+      "sha256": "ddf31e8c8c9782cbcd4d8fc74034d13f0e76e6859bb2d6e4ed2e2cbb09fac3ce",
+      "size": 14956
     },
     {
       "path": "gammad/broker/zerodha/wire.py",
@@ -651,8 +717,8 @@
     },
     {
       "path": "gammad/config.py",
-      "sha256": "9b1cf1a667164b690f533e4ebe31fcddbc8ad717aec5c2c3e7271702e776d445",
-      "size": 57907
+      "sha256": "6e365b7b544fa9d496d26d915fd972e40793ae4a376b128bad1cfa74312a7351",
+      "size": 58273
     },
     {
       "path": "gammad/core/__init__.py",
@@ -681,8 +747,8 @@
     },
     {
       "path": "gammad/core/day_bar.py",
-      "sha256": "21b630aa1927853d2e1044fb8a652cd2732a5548e0099126a6ad3e83a28e23f6",
-      "size": 4107
+      "sha256": "c38edc13d5cd33c36af31e509d03b3b09fa4ebda1bb350fdced6b1ce6b261137",
+      "size": 4132
     },
     {
       "path": "gammad/core/expiry.py",
@@ -706,8 +772,8 @@
     },
     {
       "path": "gammad/core/lookahead.py",
-      "sha256": "197928673f04f22885038761f7353fc5419176e168c3af96a6f5f6a2cdc90f78",
-      "size": 2250
+      "sha256": "8edf5a86a28882ba4e02104ad482662de52c6f18858a95b81b351c5cc58154db",
+      "size": 2306
     },
     {
       "path": "gammad/core/session_clock.py",
@@ -766,13 +832,13 @@
     },
     {
       "path": "gammad/jobs/ban_list.py",
-      "sha256": "884068e2a9f7e9155534f1711c8961c8155fd7999d4a9b323ef9d0bfb5139cc1",
-      "size": 9288
+      "sha256": "d8f41567aa6244182f04b3fb7d70512c6777eaffb9cad1475b8b7b97f242d0ef",
+      "size": 9482
     },
     {
       "path": "gammad/jobs/build_watchlists.py",
-      "sha256": "46b369500438898baa61311004f1c33c0a9f848f640571cca519217b929d2f2a",
-      "size": 53482
+      "sha256": "1600c0c1db223fa7f465e2742376ee3a43f7d51606a02b450a8c478edf1f1c28",
+      "size": 53529
     },
     {
       "path": "gammad/jobs/carry.py",
@@ -786,8 +852,8 @@
     },
     {
       "path": "gammad/jobs/mark_levels.py",
-      "sha256": "8fe97257c591a46c2d6683893ffb74c57b5ebdac1cab9ec8ada6e2b72c46d9f9",
-      "size": 38600
+      "sha256": "e6e5965e12fe5ef03de4bf74f5fe2c2a138a6f954837d7aaadce05f15dd49411",
+      "size": 40685
     },
     {
       "path": "gammad/jobs/readiness.py",
@@ -796,8 +862,8 @@
     },
     {
       "path": "gammad/jobs/results_calendar.py",
-      "sha256": "0da0f4fbc521a34afbfaa2118b7aa6e1790f7710f964076443c5c1540c29e5df",
-      "size": 6404
+      "sha256": "289154e7017d90858d606c535eaa7c109e910afe4bc2e13aa43736ed6d8c39f7",
+      "size": 7015
     },
     {
       "path": "gammad/log.py",
@@ -811,8 +877,8 @@
     },
     {
       "path": "gammad/record/recorder.py",
-      "sha256": "47f54bf2f4f496f8d71cff4294dc6ab49382b8d072047bd439ed0b46d217bd45",
-      "size": 20598
+      "sha256": "67fb98ad15acddef785363ed05ea41b860b5c48135030372932eb79549bd8a13",
+      "size": 20992
     },
     {
       "path": "gammad/record/stale.py",
@@ -831,8 +897,8 @@
     },
     {
       "path": "gammad/scanners/exits/__init__.py",
-      "sha256": "75383dd2febb9a5ca81515c69ded6b31cbb13c78c9bd35e4419e287862f34d1a",
-      "size": 3723
+      "sha256": "60b717a157e0e1a8ee0d024b029a3bbc73fcc3efe55a321141ce80d45b025320",
+      "size": 4069
     },
     {
       "path": "gammad/scanners/exits/rladder.py",
@@ -866,8 +932,8 @@
     },
     {
       "path": "gammad/scanners/live/hub.py",
-      "sha256": "478084c967e259260a634e31dd32eef824f13f0a1bf7886b5bb5937499bb5928",
-      "size": 23980
+      "sha256": "c451f19efad8dc9a9cc93e91023841c0169aa487fdd1d5eefafb211fffcc587f",
+      "size": 24879
     },
     {
       "path": "gammad/scanners/live/views.py",
@@ -943,6 +1009,11 @@
       "path": "gammad/store/sqlite_caps.py",
       "sha256": "d387d47a705d0da49ca69527da5e9fd92c11a6dcf4d8af97168c98010fbc2754",
       "size": 4943
+    },
+    {
+      "path": "gammad/store/user_selections.py",
+      "sha256": "bcccebeea8650c9690ca9740db6260d5e4d23f3831fb1af0aa1fe3d331260718",
+      "size": 4630
     },
     {
       "path": "gammad/trade/__init__.py",
@@ -1076,8 +1147,8 @@
     },
     {
       "path": "gammad/watch/adapter.py",
-      "sha256": "3033ac6efc849ac75fea8b1164e5e0429bbcbdba927d8b0987a484c05a14c270",
-      "size": 6128
+      "sha256": "ad7a22b7c822389d6f159510e2b7e5a689c6fc86dabe95d0d24203a6165899bf",
+      "size": 6554
     },
     {
       "path": "gammad/watch/backfill.py",
@@ -1086,8 +1157,8 @@
     },
     {
       "path": "gammad/watch/bars.py",
-      "sha256": "b4b9206d4165a5909545f77e1ec7052d013e1f8a21695b4854cbc774f49e2eab",
-      "size": 12114
+      "sha256": "d650f8bf3924a394d69fe87b1bd6a724d1f356bed283ca1d4aac4e75696d2daf",
+      "size": 12385
     },
     {
       "path": "gammad/watch/engine.py",
@@ -1101,13 +1172,13 @@
     },
     {
       "path": "gammad/watch/failover.py",
-      "sha256": "63ab70402970cd52bac2d143b406aa5b9f0aaaa434d7d8549f930f220db1fcef",
-      "size": 10255
+      "sha256": "780a795c34714b69a9b49223365c48329c2aabc447a90a67f8920c32d2fd20d3",
+      "size": 10571
     },
     {
       "path": "gammad/watch/feed.py",
-      "sha256": "0402978caaf5591896912011a1a6e32bf5896317d9b16ef0fd99edfb42cd3124",
-      "size": 27923
+      "sha256": "7697669243df6218c18c12e7b21143339c4cb9ae7486b31ae5698dcc1c989489",
+      "size": 28691
     },
     {
       "path": "gammad/watch/feed_alarm.py",
@@ -1116,8 +1187,8 @@
     },
     {
       "path": "gammad/watch/feed_protocol.py",
-      "sha256": "a0c695c2674e13a907a63ef199e92fdd98fb741633808fef20253bdb5bbc5b0b",
-      "size": 14575
+      "sha256": "e4267354fc8a403d4aa6517a9463fcc835b78efea4a4597b946419c2992b01c3",
+      "size": 14856
     },
     {
       "path": "gammad/watch/pollfeed.py",
@@ -19771,78 +19842,18 @@
     },
     {
       "path": "run_gamma.pyw",
-      "sha256": "04b3c7245f68d764c2bbd0daf5bdd8b1d8abfe667bc89c977d4faf97cbce85a4",
-      "size": 8028
+      "sha256": "98d9ac1c08372eec6db63b01b5ba0619e4480808a4bf73488a1fd73ead17cf26",
+      "size": 8137
     },
     {
       "path": "scripts/smoke_broker.py",
-      "sha256": "9e1bdb20af18ce2e0058b67871f0dd456811b130ac6f14082c7e398e1ff8a6f6",
-      "size": 72796
+      "sha256": "810efb08f3c8ebe87e1a3a9b0757b1eb088b0589560ef785ba7e03b31b83efbf",
+      "size": 72878
     },
     {
       "path": "scripts/update_gamma.py",
       "sha256": "cae3536a6806f46bcb69aa7e235f0d50a7c4906b173df9ffe57dc9378c1b6175",
       "size": 23917
-    },
-    {
-      "sha256": "ec12ba7ad7f44d8e18937d8783272a464070c2deebdc1d2cf45a17ea0db6874e",
-      "size": 208703,
-      "path": "dashboard/dist/assets/index-GU-R11.js"
-    },
-    {
-      "sha256": "c4c3833678bcba42a7c8a845b919102c1a24cf4d0104a642e3466657d5bbb190",
-      "size": 213037,
-      "path": "dashboard/dist/assets/index-GU-R12.js"
-    },
-    {
-      "path": "dashboard/dist/assets/index-GU-R13.js",
-      "sha256": "212d2d3445f3d6831e0092ac840d2836ad6df397ab305333f58b39cee3a7f49e",
-      "size": 213746
-    },
-    {
-      "path": "gammad/broker/gamma_r14.py",
-      "sha256": "29f1497aba66fc15bf5dbdd43f1044926618f2f0dce545204b2e426d61df79e8",
-      "size": 21058
-    },
-    {
-      "path": "dashboard/dist/assets/gamma-r14-manager.js",
-      "sha256": "1b2fe655484e2972a19cf2e3a1176cf88efa1a943c89a69d00e6fa00fca5048b",
-      "size": 10611
-    },
-    {
-      "path": "dashboard/dist/assets/gamma-r14-manager.css",
-      "sha256": "3ecfe0c9447d99e74aa3f3badd3c51467eda2f45f5956870d77b224896850c48",
-      "size": 2093
-    },
-    {
-      "path": "dashboard/dist/assets/index-GU-R14.js",
-      "sha256": "06c9ab74de18361c220a8ba0807ad5d910bec6b0516582618dd2f3af8b670d60",
-      "size": 213783
-    },
-    {
-      "path": "gammad/broker/gamma_r15.py",
-      "sha256": "81fd75893e98d291a4a7135b618a1242619d3d15a7db66022ab157ece57b523b",
-      "size": 9240
-    },
-    {
-      "path": "dashboard/dist/assets/gamma-r15.js",
-      "sha256": "d74c6b9a2d897b1d1b04eac083bddb9e6ee9cf6d0d1c729f71d300405973e994",
-      "size": 3067
-    },
-    {
-      "path": "gammad/store/user_selections.py",
-      "sha256": "bcccebeea8650c9690ca9740db6260d5e4d23f3831fb1af0aa1fe3d331260718",
-      "size": 4630
-    },
-    {
-      "path": "dashboard/dist/assets/gamma-r10c1-selections.js",
-      "sha256": "a11360d46fc85d212515c6112674a2f8bac40dbfdb1bfddc06225e6289d41b68",
-      "size": 9580
-    },
-    {
-      "path": "dashboard/dist/assets/gamma-r10c1-selections.css",
-      "sha256": "6b0f215e17d1c243fe7a3303de98f48e4a5dbb7653a9f0541e27d01705ecd811",
-      "size": 2893
     }
   ],
   "local_patch": "FYERS-RATE-AND-BROKER-LOGIN-R1 + BROKER-LINK-R1.1 + NATIVE-BROKER-TAB-R1.2 + SAFE-BROKER-UX-R1.3 + UNIFIED-BROKER-MANAGER-R1.4 + BROKER-SECURITY-R1.4.1 + BROKER-QUALIFICATION-R1.5 + ZERODHA-PROFILE-CONTRACT-R1.5.1 + FYERS-422-CONTAINMENT-R4 + FYERS-STANDARD-HISTORY-PREFLIGHT-R9 + GAMMA-DUAL-USER-SELECTIONS-R10B + GAMMA-DUAL-WATCHLIST-UI-R10C1 + GAMMA-UNIFIED-WATCHLIST-UI-R10C2A"

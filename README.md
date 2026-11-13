@@ -1,20 +1,20 @@
 # GAMMA-UNWIND
 
-**Windows client · installed baseline 0.8.9 · candidate qualification updated 2026-11-03**
+**Windows client · baseline 0.8.9 + Phase 0–4 maintenance & R1.9 multi-broker hardening**
 
-GAMMA-UNWIND is a locally operated NSE F&O options scanner. It builds support/resistance-driven watchlists, observes option price/volume/open-interest activity, evaluates configured signal rules, and exposes a browser dashboard with optional Telegram alerts and follow-ups. It is **not an order-placement system**. Alerts are informational; paper-position tracking is not broker execution.
+GAMMA-UNWIND is a locally operated NSE F&O options scanner. It builds support/resistance-driven watchlists, observes option price/volume/open-interest activity, evaluates configured `V1N` and V1 signal rules, and exposes a browser dashboard with optional Telegram alerts and follow-ups. It is **not an order-placement system** (`ORDERS = 0`). Alerts are informational; paper-position tracking is not broker execution.
 
-> **Release boundary (3 November 2026):** R1.9 candidate development is qualified through Phases 1–5 and Phase 7 (packaging/rollback qualification). The 249-source candidate archive (`886A2F65C494AD975345550BEA34BD6DD34E1CC3602A46CA9AB565E3EAD4038B`) passed all 56/56 offline unit, integration, and sandbox tests with zero warnings. Phase 6 (Telegram receipt/idempotency) was deferred by user decision. Production deployment, live broker transport, and real orders remain strictly on HOLD. **R10H Apply = HOLD, ORDERS = 0, LIVE_BROKER_REQUESTS = 0.**
+## Simple daily workflow (local Windows client)
 
-## Quick start (installed Windows client)
-
-1. Review [Installation & Operations](docs/INSTALLATION_OPERATIONS.md) and the preserved [`docs/GAMMA-UNWIND-Setup-Guide.docx`](docs/GAMMA-UNWIND-Setup-Guide.docx).
-2. Open `Check Setup.cmd`; inspect actual broker readiness, not just a configured login URL.
-3. Start with `Start GAMMA.cmd`, then use the local dashboard (the bundled 0.8.9 guide documents `http://127.0.0.1:8760`). Do not expose the dashboard to the public internet.
-4. Confirm broker authorization, freshness, subscriptions and daily jobs in status before treating any signal as live-qualified.
-5. Stop with the project's supported `Stop GAMMA.cmd` path. Do not terminate or restart during stateful testing without a documented recovery procedure.
-
-The running application's actual endpoints/settings remain authoritative over examples in this documentation. Never add raw access tokens, broker secrets, local session stores or customer/account data to these Markdown files.
+1. Run `Check Setup.cmd` (`scripts/smoke_broker.py --check-setup`) to verify `MANIFEST.json` file hashes, `.env` configuration, and broker readiness.
+2. Double-click `Start GAMMA.cmd` and open the local dashboard (`http://127.0.0.1:<port>`, default `8760`; host/origin guards validate against the active server port or `GAMMA_PORT`). First start copies `.env.example` (`BROKER=` blank) to `.env` if missing; the app starts with **no default broker** (`Running: NONE (select a broker)`, strategy `engines_allowed=False`) until a broker is selected and staged. Never expose the dashboard to the public internet without `GAMMA_LAN=1` and a strong `GAMMA_LAN_PASSWORD`.
+3. **Connecting or switching brokers (`#/token` — Broker Connection Manager R1.4 + R1.5):**
+   - The legacy `Broker connections` panel has been removed; `#/token` shows only **Broker connection manager · R1.4** (and the active broker's top daily-login form once configured).
+   - Select one of the 11 registered brokers (`dhan`, `zerodha`, `angel`, `fyers`, `upstox`, `nuvama`, `kotak`, `groww`, `shoonya`, `flattrade`, and Stage 1 history-only `definedge`), save API credentials (encrypted in Windows DPAPI), and complete its login step.
+   - Click **Verify session & feed (R1.5)** to run an opt-in read-only profile and quote probe.
+   - Click **Stage scanner switch** (confirm `SWITCH TO <BROKER>`) to back up `.env` (up to 3 ACL-locked backups in `data/backups/`), auto-create `.env` from `.env.example` if absent, and persist `BROKER` in `.env`, then restart via `Stop GAMMA.cmd` -> `Start GAMMA.cmd` so your last active login reloads automatically.
+4. **Decoupled historical data (optional `.env` keys):** Set `GAMMA_HISTORY_PROVIDER` (e.g. `definedge` alongside `BROKER=fyers`, or `none` to disable fallback), `GAMMA_HISTORY_BARS_LIMIT`, and/or `FYERS_HISTORY_TIER` if your history source differs from your active broker (`resolve_configured_adapter(..., for_history=True)`).
+5. Always stop via `Stop GAMMA.cmd` so SQLite WAL stores, `Recorder`, and outbox state shut down cleanly. Never commit `.env` or add raw access tokens/secrets to Markdown files.
 
 ## Documentation index
 

@@ -22,7 +22,7 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 
 _LOCK = threading.RLock()
-_IDS = ('dhan','zerodha','angel','fyers','upstox','nuvama','kotak','groww','shoonya','flattrade')
+_IDS = ('dhan','zerodha','angel','fyers','upstox','nuvama','kotak','groww','shoonya','flattrade','definedge')
 _CTRL = 'X-Gamma-Control'
 _CONFIRM = re.compile(r'^SWITCH TO ([A-Z][A-Z0-9_-]{1,24})$')
 _SAFE_VALUE = re.compile(r'^[^\r\n\x00]{1,8192}$')
@@ -117,7 +117,11 @@ def _catalog():
 def _dotenv(root: Path) -> dict[str,str]:
     from dotenv import dotenv_values
     f=root/'.env'
-    if not f.is_file() or f.is_symlink():
+    if f.is_symlink():
+        raise BrokerManagerFailure('Unsafe .env path')
+    if not f.exists():
+        return {}
+    if not f.is_file():
         raise BrokerManagerFailure('Expected root .env missing')
     return {str(k):(v or '') for k,v in dotenv_values(f).items() if k is not None}
 
@@ -145,29 +149,58 @@ def _profile_status(name: str,active: str,base:dict,vault:dict,login_state:objec
         state='login_ok' if login_state is True else 'login_required' if login_state is False else 'active_login_unverified'
     elif vault.get(name,{}).get('exchange_completed') and token_present:
         state='exchange_completed_not_feed_verified'
+    from gammad.broker import gamma_r15
+
+    q=gamma_r15.qualification_state(name,creds)
+    feed_verified=bool(q['feed_verified']) if name!=active else bool(login_state is True and q['feed_verified'])
+    can_stage=bool(
+        name!=active
+        and entry.caps.status!='beta-unverified'
+        and not missing
+        and token_present
+        and q['auth_ok']
+        and q['feed_verified']
+    )
+    if can_stage:
+        switch_reason=f'Verified session and market feed ready: type SWITCH TO {name.upper()} to stage'
+    elif name==active:
+        switch_reason='Already the active scanner'
+    elif entry.caps.status=='beta-unverified':
+        switch_reason='Unverified beta adapter cannot be selected for scanning'
+    elif missing:
+        switch_reason='Complete required setup fields: '+', '.join(missing)
+    elif not token_present:
+        switch_reason='Daily login / access token required before verification'
+    elif q['auth_ok'] and not q['feed_verified']:
+        switch_reason='Session verified, but market-data feed check is not yet verified (check data subscription and retry R1.5)'
+    else:
+        switch_reason='Click Verify session & feed (R1.5) to confirm live authentication and market-data feed before switching'
     method='redirect_code' if entry.client_login is not None else 'manual_token_only'
     return {'id':name,'label':entry.label,'active':name==active,'adapter_status':entry.caps.status,
             'state':state,'fields':checks,'missing_setup':missing,'token_present':token_present,
             'login_method':method,'login_fields':list(entry.client_login.fields) if entry.client_login is not None else [],
-            'feed_verified':False,'can_stage':False,'switch_reason':'Scanner switching requires independently validated authentication and market-data feed',
+            'feed_verified':feed_verified,'can_stage':can_stage,'switch_reason':switch_reason,
             'last_exchange_utc':vault.get(name,{}).get('exchange_utc') if vault.get(name,{}).get('exchange_completed') else None}
 
 
 def _active(runtime,base):
     # Active adapter is in memory until process restart; .env BROKER is a staged target.
-    entry=getattr(runtime,'broker_entry',None)
-    return entry.name if entry is not None else str(base.get('BROKER') or '').lower()
+    if runtime is not None and hasattr(runtime,'broker_entry'):
+        entry=runtime.broker_entry
+        return entry.name.lower() if entry is not None else ''
+    return str(base.get('BROKER') or '').strip().lower()
 
 
 def snapshot(runtime,root:Path):
     with _LOCK:
         base=_dotenv(root); vault=_load_vault(); active=_active(runtime,base)
+        staged=str(base.get('BROKER') or '').strip().lower()
         try:
             s=runtime.token_status(); valid=s.get('valid') if type(s) is dict else None
             if type(valid) is not bool: valid=None
         except Exception: valid=None
-        return {'active':active,'staged':str(base.get('BROKER') or '').lower(),
-                'restart_pending':active != str(base.get('BROKER') or '').lower(),
+        return {'active':active,'staged':staged,
+                'restart_pending':active != staged,
                 'brokers':[_profile_status(i,active,base,vault,valid) for i in _IDS],
                 'notice':'Credential presence is not authentication or feed verification. An exchange is not proof of live feed.'}
 
@@ -275,10 +308,11 @@ def _env_stage_text(original: bytes,selected:str,updates:dict)->bytes:
     return ''.join(lines).encode(enc)
 
 
-def _scanner_activation_verified(name: str) -> bool:
-    # Disabled by design until an adapter can prove both authentication and feed.
-    # Do not infer readiness from token presence or a successful OAuth exchange.
-    return False
+def _scanner_activation_verified(name: str, creds: dict[str,str] | None = None) -> bool:
+    from gammad.broker import gamma_r15
+
+    resolved = gamma_r15._merge_creds(name) if creds is None else creds
+    return gamma_r15.is_qualified(name,resolved,require_feed=True)
 
 def switch(name:str,expected:str,confirmation:str,ack:bool,runtime,root:Path)->dict:
     with _LOCK:
@@ -288,30 +322,38 @@ def switch(name:str,expected:str,confirmation:str,ack:bool,runtime,root:Path)->d
         if name==active:raise BrokerManagerFailure('Requested broker is already active')
         if confirmation != 'SWITCH TO '+name.upper():
             raise BrokerManagerFailure('Type exact broker-switch confirmation')
-        if ack is not True:raise BrokerManagerFailure('Acknowledgement of restart and unverified live feed is required')
+        if ack is not True:raise BrokerManagerFailure('Acknowledgement of restart and verification summary is required')
         reg=_catalog();entry=reg.get(name)
         if entry.caps.status=='beta-unverified':
             raise BrokerManagerFailure('Unverified broker adapter cannot be selected for scanning')
-        # R1.4.1: fail closed until an independent authenticated/feed check exists.
-        if not _scanner_activation_verified(name):
-            raise BrokerManagerFailure('Scanner switching disabled until broker authentication and data-feed checks are implemented')
         data=_load_vault();creds=_merged(name,base,data)
         need=reg.required_keys(entry)
         missing=[k for k in need if not (creds.get(k) or '').strip()]
         if missing:raise BrokerManagerFailure('Target broker configuration incomplete: '+', '.join(missing))
+        # R1.4.1 / R1.5: fail closed unless read-only auth and market-data feed checks succeeded for current credentials.
+        if not _scanner_activation_verified(name,creds):
+            raise BrokerManagerFailure('Run Verify session & feed (R1.5) for current credentials before staging scanner switch')
         p=root/'.env'
-        if p.is_symlink():raise BrokerManagerFailure('Unsafe .env path')
-        before=p.read_bytes()
+        if p.is_symlink() or (p.exists() and not p.is_file()):
+            raise BrokerManagerFailure('Unsafe .env path')
+        existed=p.is_file()
+        if existed:
+            before=p.read_bytes()
+        else:
+            example=root/'.env.example'
+            before=example.read_bytes() if (example.is_file() and not example.is_symlink()) else b''
         after=_env_stage_text(before,name,{k:creds[k] for k in entry.key_names if creds.get(k)})
-        # Snapshot of sensitive .env is stored in the same private directory (legacy compatibility).
-        # Every switch requires explicit confirmation; no app restart occurs in this endpoint.
-        stamp=datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
-        backup=root/('.env.before-r14-'+stamp+'.bak')
-        if backup.exists():raise BrokerManagerFailure('Backup name conflict')
-        _atomic(backup,before)
+        # Snapshot of sensitive .env is stored in ACL-restricted data/backups/ and pruned to latest 3.
+        from gammad.api.broker_selection import write_env_backup
+
+        try:
+            backup = write_env_backup(p, before, prefix='.env.before-r14-')
+        except (OSError, ValueError) as exc:
+            raise BrokerManagerFailure(f'Backup failed: {exc}') from None
         try: _atomic(p,after)
         except Exception:
-            _atomic(p,before)
+            if existed:
+                _atomic(p,before)
             raise BrokerManagerFailure('Could not stage broker configuration') from None
         return {'ok':True,'staged':name,'running':active,'restart_required':True,'backup_name':backup.name,
                 'warning':'Legacy .env holds active credentials. Backup and .env must remain private.'}
@@ -322,14 +364,14 @@ def install_routes(app,runtime):
     from gammad import REPO_ROOT
     root=Path(REPO_ROOT)
     async def guarded(req:Request):
+        from gammad.broker import gamma_r15
+
         if req.headers.get(_CTRL)!='1':
             return JSONResponse({'error':'control header required'},status_code=403)
         if req.headers.get('content-type','').split(';')[0].strip().lower()!='application/json':
             return JSONResponse({'error':'JSON required'},status_code=415)
-        if req.headers.get('origin'):
-            host=req.headers.get('host','')
-            if req.headers['origin'] not in ('http://'+host,'https://'+host):
-                return JSONResponse({'error':'same origin required'},status_code=403)
+        if req.headers.get('origin') and not gamma_r15.local_request_ok(req,check_origin=True,require_control=False):
+            return JSONResponse({'error':'same origin required'},status_code=403)
         return None
     async def safe_body(req):
         raw=await req.body()
@@ -349,12 +391,11 @@ def install_routes(app,runtime):
             return JSONResponse({'error':'Broker manager operation failed (no credentials included)'},status_code=500)
     @app.middleware('http')
     async def block_legacy_stage(req:Request,call_next):
-        # R1.4.1: local-only manager. Reject DNS rebinding and direct LAN access.
+        # R1.4.1: local-only manager on active loopback port. Reject DNS rebinding and direct LAN access.
+        from gammad.broker import gamma_r15
+
         if req.url.path.startswith('/api/broker-manager/'):
-            supplied_host=(req.headers.get('host') or '').lower()
-            peer=req.client.host if req.client else ''
-            if (supplied_host not in ('127.0.0.1:8760','localhost:8760','[::1]:8760')
-                or peer not in ('127.0.0.1','::1','::ffff:127.0.0.1')):
+            if not gamma_r15.local_request_ok(req,check_origin=False,require_control=False):
                 return JSONResponse({'error':'local broker manager only'},status_code=403)
         if req.url.path.rstrip('/')=='/api/brokers/stage' and req.method.upper()=='POST':
             return JSONResponse({'error':'Legacy unvalidated switch disabled by R1.4; use Broker Manager'},status_code=409)

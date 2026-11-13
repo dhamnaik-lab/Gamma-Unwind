@@ -140,25 +140,24 @@ def _get_env_val(cfg: Any, key: str) -> str:
     return os.environ.get(key, "").strip()
 
 
-def load_history_provider_config(cfg: Any) -> HistoryProviderConfig:
+def load_history_provider_config(cfg: Any) -> HistoryProviderConfig | None:
     """Load decoupled HistoryProviderConfig.
-    
-    Ingests GAMMA_HISTORY_PROVIDER, falling back to active broker / default.
+
+    Ingests GAMMA_HISTORY_PROVIDER, falling back to configured broker (None when unconfigured).
     """
     raw_provider = _get_env_val(cfg, ENV_HISTORY_PROVIDER)
     if raw_provider:
         provider_name = raw_provider.lower()
+        if provider_name == "none":
+            return None
     else:
-        # Fallback to configured broker
+        # Fallback to explicitly configured broker; never default to a hardcoded broker
         broker = ""
         if hasattr(cfg, "env") and hasattr(cfg.env, "broker"):
             broker = (cfg.env.broker or "").strip().lower()
-        if not broker:
-            try:
-                broker = registry.resolve(None).name
-            except Exception:
-                broker = "dhan"
-        provider_name = broker or "dhan"
+        if not broker or broker == "none":
+            return None
+        provider_name = broker
 
     # Ingest limits / budget if configured
     raw_bars = _get_env_val(cfg, ENV_HISTORY_BARS_LIMIT)
@@ -190,12 +189,64 @@ def load_account_session_manager(cfg: Any, *, data_dir: Path | None = None) -> A
         return _load_mode_b(cfg, raw_accounts_json, d_dir)
 
 
+def _register_mode_a_history(
+    mgr: AccountSessionManager,
+    cfg: Any,
+    data_dir: Path,
+    vals: dict[str, str],
+) -> None:
+    hist_cfg = load_history_provider_config(cfg)
+    if hist_cfg is None:
+        return
+    if hist_cfg.provider_name in registry.BROKERS:
+        hist_vals = dict(vals)
+        if hist_cfg.provider_name == "dhan" and hasattr(cfg, "env"):
+            if getattr(cfg.env, "dhan_client_id", None):
+                hist_vals.setdefault("DHAN_CLIENT_ID", cfg.env.dhan_client_id)
+            if getattr(cfg.env, "dhan_access_token", None):
+                hist_vals.setdefault("DHAN_ACCESS_TOKEN", cfg.env.dhan_access_token)
+        try:
+            hist_entry = registry.get(hist_cfg.provider_name)
+            hist_creds = registry.creds_from_env(hist_entry, hist_vals)
+            hist_adapter = hist_entry.make_adapter(hist_creds, data_dir)
+            mgr.register_history_provider(hist_cfg, hist_adapter)
+        except Exception as exc:
+            log.error(
+                "Mode A: failed to initialize history provider %r (%s); registering unauthenticated adapter",
+                hist_cfg.provider_name,
+                exc,
+            )
+            mgr.register_history_provider(
+                hist_cfg,
+                UnauthenticatedBrokerAdapter(hist_cfg.provider_name, reason=str(exc)),
+            )
+    elif (
+        hist_cfg.provider_name.startswith("mock_")
+        or hist_cfg.provider_name.startswith("test_")
+        or hist_cfg.provider_name.startswith("paper")
+    ):
+        mgr.register_history_provider(hist_cfg, MockBrokerAdapter(hist_cfg.provider_name))
+    else:
+        log.error(
+            "Mode A: failed to initialize history provider %r (unregistered); registering unauthenticated adapter",
+            hist_cfg.provider_name,
+        )
+        mgr.register_history_provider(
+            hist_cfg,
+            UnauthenticatedBrokerAdapter(hist_cfg.provider_name, reason="unregistered history provider"),
+        )
+
+
 def _load_mode_a(cfg: Any, data_dir: Path) -> AccountSessionManager:
     """Synthesize AccountSessionManager from legacy single-broker configuration."""
     mgr = AccountSessionManager(active_account_id="primary")
     broker_name = ""
     if hasattr(cfg, "env") and hasattr(cfg.env, "broker"):
         broker_name = (cfg.env.broker or "").strip().lower()
+
+    vals: dict[str, str] = {}
+    if hasattr(cfg, "env") and hasattr(cfg.env, "values") and isinstance(cfg.env.values, Mapping):
+        vals = dict(cfg.env.values)
 
     try:
         entry = registry.resolve(broker_name or None)
@@ -210,15 +261,18 @@ def _load_mode_a(cfg: Any, data_dir: Path) -> AccountSessionManager:
             acc_creds = AccountCredentials(broker=broker_name, account_id="primary", credentials={})
             mgr.register_account(ident, adapter, probe_health=False, credentials=acc_creds)
             hist_cfg = load_history_provider_config(cfg)
-            mgr.register_history_provider(hist_cfg, adapter)
+            if hist_cfg is not None:
+                if hist_cfg.provider_name == broker_name:
+                    mgr.register_history_provider(hist_cfg, adapter)
+                else:
+                    _register_mode_a_history(mgr, cfg, data_dir, vals)
             return mgr
-        log.warning("Mode A: broker registry resolution failed (%s); returning empty manager", exc)
+        if _get_env_val(cfg, ENV_HISTORY_PROVIDER):
+            _register_mode_a_history(mgr, cfg, data_dir, vals)
+        log.warning("Mode A: broker registry resolution failed (%s); returning manager without trading account", exc)
         return mgr
 
     # Extract credentials mapping
-    vals: dict[str, str] = {}
-    if hasattr(cfg, "env") and hasattr(cfg.env, "values") and isinstance(cfg.env.values, Mapping):
-        vals = dict(cfg.env.values)
     if entry.name == "dhan" and hasattr(cfg, "env"):
         if getattr(cfg.env, "dhan_client_id", None):
             vals["DHAN_CLIENT_ID"] = cfg.env.dhan_client_id
@@ -250,16 +304,12 @@ def _load_mode_a(cfg: Any, data_dir: Path) -> AccountSessionManager:
 
     # Register decoupled history provider
     hist_cfg = load_history_provider_config(cfg)
+    if hist_cfg is None:
+        return mgr
     if hist_cfg.provider_name == entry.name:
         mgr.register_history_provider(hist_cfg, adapter)
     else:
-        try:
-            hist_entry = registry.get(hist_cfg.provider_name)
-            hist_creds = registry.creds_from_env(hist_entry, vals)
-            hist_adapter = hist_entry.make_adapter(hist_creds, data_dir)
-            mgr.register_history_provider(hist_cfg, hist_adapter)
-        except Exception:
-            mgr.register_history_provider(hist_cfg, adapter)
+        _register_mode_a_history(mgr, cfg, data_dir, vals)
 
     return mgr
 
@@ -358,32 +408,71 @@ def _load_mode_b(cfg: Any, accounts_json_str: str, data_dir: Path) -> AccountSes
         except Exception as exc:
             log.warning("could not set active account %s: %s", active_to_set, exc)
 
-    # Register decoupled history provider
+    # Register decoupled history provider (respect explicit GAMMA_HISTORY_PROVIDER="none")
     hist_cfg = load_history_provider_config(cfg)
-    matching = [s for s in mgr.list_accounts() if s.identity.broker == hist_cfg.provider_name and s.adapter is not None]
-    if matching:
-        mgr.register_history_provider(hist_cfg, matching[0].adapter)
-    elif hist_cfg.provider_name in registry.BROKERS:
-        try:
-            hist_entry = registry.get(hist_cfg.provider_name)
-            merged_env = dict(cfg.env.values if hasattr(cfg, "env") and hasattr(cfg.env, "values") and isinstance(cfg.env.values, Mapping) else {})
-            hist_creds = registry.creds_from_env(hist_entry, merged_env)
-            hist_adapter = hist_entry.make_adapter(hist_creds, data_dir)
-            mgr.register_history_provider(hist_cfg, hist_adapter)
-        except Exception as exc:
-            log.warning("Mode B: decoupled history adapter instantiation for %s failed (%s); using unauthenticated", hist_cfg.provider_name, exc)
+    explicit_hist_none = _get_env_val(cfg, ENV_HISTORY_PROVIDER).lower() == "none"
+    if hist_cfg is None and not explicit_hist_none:
+        active = mgr.active_account()
+        if active is not None:
+            raw_bars = _get_env_val(cfg, ENV_HISTORY_BARS_LIMIT)
+            raw_budget = _get_env_val(cfg, ENV_HISTORY_DAILY_BUDGET)
+            bars_limit = int(raw_bars) if raw_bars and raw_bars.isdigit() else 2000
+            budget = int(raw_budget) if raw_budget and raw_budget.isdigit() else 6
+            hist_cfg = HistoryProviderConfig(
+                provider_name=active.identity.broker,
+                daily_bars_limit=bars_limit,
+                daily_request_budget=budget,
+            )
+    if hist_cfg is not None:
+        matching = [s for s in mgr.list_accounts() if s.identity.broker == hist_cfg.provider_name and s.adapter is not None]
+        if matching:
+            mgr.register_history_provider(hist_cfg, matching[0].adapter)
+        elif hist_cfg.provider_name in registry.BROKERS:
+            try:
+                hist_entry = registry.get(hist_cfg.provider_name)
+                merged_env = dict(cfg.env.values if hasattr(cfg, "env") and hasattr(cfg.env, "values") and isinstance(cfg.env.values, Mapping) else {})
+                hist_creds = registry.creds_from_env(hist_entry, merged_env)
+                hist_adapter = hist_entry.make_adapter(hist_creds, data_dir)
+                mgr.register_history_provider(hist_cfg, hist_adapter)
+            except Exception as exc:
+                log.warning("Mode B: decoupled history adapter instantiation for %s failed (%s); using unauthenticated", hist_cfg.provider_name, exc)
+                active = mgr.active_account()
+                if active is not None and active.adapter is not None:
+                    mgr.register_history_provider(hist_cfg, active.adapter)
+                else:
+                    mgr.register_history_provider(hist_cfg, UnauthenticatedBrokerAdapter(hist_cfg.provider_name, reason=str(exc)))
+        elif hist_cfg.provider_name.startswith("mock_") or hist_cfg.provider_name.startswith("test_") or hist_cfg.provider_name.startswith("paper"):
+            mgr.register_history_provider(hist_cfg, MockBrokerAdapter(hist_cfg.provider_name))
+        else:
             active = mgr.active_account()
             if active is not None and active.adapter is not None:
                 mgr.register_history_provider(hist_cfg, active.adapter)
             else:
-                mgr.register_history_provider(hist_cfg, UnauthenticatedBrokerAdapter(hist_cfg.provider_name, reason=str(exc)))
-    elif hist_cfg.provider_name.startswith("mock_") or hist_cfg.provider_name.startswith("test_") or hist_cfg.provider_name.startswith("paper"):
-        mgr.register_history_provider(hist_cfg, MockBrokerAdapter(hist_cfg.provider_name))
-    else:
-        active = mgr.active_account()
-        if active is not None and active.adapter is not None:
-            mgr.register_history_provider(hist_cfg, active.adapter)
-        else:
-            mgr.register_history_provider(hist_cfg, UnauthenticatedBrokerAdapter(hist_cfg.provider_name, reason="unregistered history provider"))
+                mgr.register_history_provider(hist_cfg, UnauthenticatedBrokerAdapter(hist_cfg.provider_name, reason="unregistered history provider"))
 
     return mgr
+
+
+def resolve_configured_adapter(cfg: Any | None = None, *, for_history: bool = False) -> BrokerAdapter:
+    """Resolve the active or decoupled history BrokerAdapter from settings without hardcoding Dhan."""
+    if cfg is None:
+        from gammad.config import settings
+
+        cfg = settings()
+    mgr = load_account_session_manager(cfg)
+    if for_history:
+        try:
+            return mgr.history_adapter()
+        except SessionRoutingError:
+            pass
+    active = mgr.active_account()
+    if active is not None and active.adapter is not None:
+        return active.adapter
+    entry = registry.resolve(getattr(getattr(cfg, "env", None), "broker", None) or None)
+    return entry.make_adapter(
+        registry.creds_from_env(
+            entry,
+            getattr(getattr(cfg, "env", None), "values", {}) or {},
+        ),
+        cfg.paths.data_dir,
+    )

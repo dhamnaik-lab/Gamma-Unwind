@@ -69,10 +69,20 @@ def event(state, bar, kind, *, px=None, lots=0, leg=None, new_stop=None, reason=
     return sc.ExitEvent(state.position_key, kind, leg, ts, decided, px, lots, new_stop, reason)
 
 
+def _calc_charges(charges, entry_px: float, exit_px: float, qty: float, orders: int) -> float:
+    if charges is None:
+        return 0.0
+    try:
+        return float(charges(entry_px, exit_px, qty, orders=orders))
+    except TypeError:
+        return float(charges(entry_px, exit_px, qty))
+
+
 def book(state, bar, kind, lots, px, charges, *, leg=None, reason="", at_open=False):
     emitted = event(state, bar, kind, px=px, lots=lots, leg=leg, reason=reason, at_open=at_open)
     qty = lots * state.lot_size
-    cost = charges(state.entry_px, px, qty) if charges is not None else 0.0
+    orders = 2 if state.lots_open == state.lots_total else 1
+    cost = _calc_charges(charges, state.entry_px, px, qty, orders)
     remaining = state.lots_open - lots
     state = replace(state, lots_open=remaining, closed=remaining == 0,
                     realized_rs=state.realized_rs + (px - state.entry_px) * qty - cost)

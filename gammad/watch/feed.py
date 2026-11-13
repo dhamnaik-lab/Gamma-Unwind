@@ -26,7 +26,7 @@ import struct
 import time
 from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import dataclass, replace
-from typing import Protocol
+from typing import Any, Protocol
 
 from gammad.core import session_clock
 from gammad.log import get_logger
@@ -344,6 +344,21 @@ def zero_oi_as_absent(t: Tick) -> Tick | None:
     return None
 
 
+def safe_put_tick(out: Any, tick: Tick) -> tuple[bool, str | None]:
+    """Push `tick` to `out` without tearing down feed loops on QueueFull or WatermarkHold."""
+    try:
+        out.put_nowait(tick)
+        return True, None
+    except asyncio.QueueFull:
+        return False, "queue_full"
+    except Exception as exc:
+        from gammad.broker.durable_watermark import WatermarkHold
+
+        if isinstance(exc, WatermarkHold):
+            return False, str(exc) or "watermark_hold"
+        raise
+
+
 async def _websockets_connect(url: str) -> WSLike:
     import websockets
 
@@ -653,7 +668,9 @@ class DhanFeed:
                     (t.ts_ms - t.recv_ms) / 3.6e6,
                     t.recv_ms,
                 )
-        try:
-            self.out.put_nowait(t)
-        except asyncio.QueueFull:
+        ok, drop_reason = safe_put_tick(self.out, t)
+        if not ok:
             self.dropped += 1
+            if drop_reason and drop_reason != "queue_full" and (self.dropped == 1 or self.dropped % 100 == 0):
+                log.warning("feed: tick held (%s) on %s %d (total dropped=%d)", drop_reason, t.segment, t.security_id,
+                            self.dropped)

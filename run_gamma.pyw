@@ -42,10 +42,12 @@ BOX_TEXT = (
 
 def _prepare() -> None:
     os.chdir(ROOT)
-    site = ROOT / ".venv" / "Lib" / "site-packages"
-    for p in (str(site), str(ROOT)):
-        if p not in sys.path:
-            sys.path.insert(0, p)
+    if not (ROOT / "python").is_dir():
+        site = ROOT / ".venv" / "Lib" / "site-packages"
+        if site.is_dir() and str(site) not in sys.path:
+            sys.path.append(str(site))
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
     # pythonw has no console: stdout / stderr are None and any stray write would raise.
     if sys.stdout is None or sys.stderr is None:
         sink = open(os.devnull, "w", encoding="utf-8")  # noqa: SIM115 -- lives for the whole process

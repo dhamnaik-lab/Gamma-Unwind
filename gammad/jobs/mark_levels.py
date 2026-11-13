@@ -25,9 +25,10 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import sqlite3
 import time
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from itertools import pairwise
@@ -232,7 +233,12 @@ def _fyers_history_preflight(adapter: BrokerAdapter, trade_date: date, daily_bar
     Does not change the 2,000-bar strategy, the existing R4 rejection handler,
     or the behavior of other brokers. A price-only re-mark needs no history.
     """
-    if FYERS_HISTORY_ACCESS_TIER != "standard" or not type(adapter).__module__.startswith("gammad.broker.fyers"):
+    tier = FYERS_HISTORY_ACCESS_TIER
+    if tier == "standard":
+        env_tier = os.environ.get("FYERS_HISTORY_ACCESS_TIER") or os.environ.get("FYERS_HISTORY_TIER")
+        if env_tier and env_tier.strip():
+            tier = env_tier.strip().lower()
+    if tier != "standard" or not type(adapter).__module__.startswith("gammad.broker.fyers"):
         return
     today = now_ist().date()
     try:
@@ -244,8 +250,9 @@ def _fyers_history_preflight(adapter: BrokerAdapter, trade_date: date, daily_bar
         raise FyersHistoryUnavailable(
             "FYERS Standard daily history insufficient: "
             f"requested_from={wanted.isoformat()} available_from_approx={oldest.isoformat()} "
-            f"daily_bars={daily_bars}; obtain authorized full history or appropriate entitlement; "
-            "not shortening bars or sending history requests"
+            f"daily_bars={daily_bars}; set GAMMA_HISTORY_PROVIDER=<definedge|dhan|zerodha|upstox>, "
+            "set FYERS_HISTORY_TIER=prime if entitled, or set GAMMA_HISTORY_BARS_LIMIT=1100 "
+            "to operate within FYERS Standard's 5-year history window"
         )
 
 
@@ -376,6 +383,7 @@ def _remark(
     daily_bars: int,
     universe_as_of: date | None,
     bars_sink: dict[int, list[Candle]] | None = None,
+    ltp_adapter: BrokerAdapter | None = None,
 ) -> tuple[str, str, dict[str, Any]]:
     """T-277 price-only re-mark of `base_id`'s stocks -> (status, runs.note, summary fields). Writes the rows unless
     the run is refused (> MAX_STALE_PCT stale: status 'failed', nothing written).
@@ -421,7 +429,8 @@ def _remark(
     if extra:  # T-309 can fetch missing stocks' FULL daily history even inside a price re-mark.
         _fyers_history_preflight(adapter, trade_date, daily_bars)
     ids = [int(r["security_id"]) for r in base_rows] + [u.eq_security_id for u in extra]
-    ltps = adapter.ltp(ids, "NSE_EQ") if ids else {}  # ONE price call for the base AND the stocks it lacks
+    price_adapter = ltp_adapter or adapter
+    ltps = price_adapter.ltp(ids, "NSE_EQ") if ids else {}  # ONE price call for the base AND the stocks it lacks
     rows: list[dict[str, Any]] = []
     stale: list[str] = []
     bad: list[str] = []
@@ -520,6 +529,7 @@ def run(
     symbols: Sequence[str] | None = None,
     *,
     adapter: BrokerAdapter | None = None,
+    ltp_adapter: BrokerAdapter | None = None,
     conn: sqlite3.Connection | None = None,
     cfg: Settings | None = None,
     universe_as_of: date | None = None,
@@ -527,6 +537,7 @@ def run(
     base: str | None = None,
     refresh_hm: str | None = None,
     prev_trading_day: date | None = None,
+    daily_bars_limit: int | None = None,
 ) -> dict[str, Any]:
     """`bars_sink` (S1.7.0, T-267 hunk A): when given, each symbol's daily candles as fetched (eq_security_id ->
     candles, the fetch_bars cut) are put in it, so the app's V2 regime step reads the SAME bars with no second
@@ -554,9 +565,39 @@ def run(
     t0 = time.perf_counter()
     cfg = cfg or settings()
     if adapter is None:
-        from gammad.broker.dhan import DhanAdapter
+        from gammad.broker.config_loader import UnauthenticatedBrokerAdapter, resolve_configured_adapter
 
-        adapter = DhanAdapter.from_settings()
+        adapter = resolve_configured_adapter(cfg, for_history=True)
+        if ltp_adapter is None and ref == "ltp":
+            try:
+                cand = resolve_configured_adapter(cfg, for_history=False)
+            except (BrokerAuthError, BrokerError):
+                cand = None
+            if cand is not None:
+                if not isinstance(cand, UnauthenticatedBrokerAdapter) and type(cand) is not type(adapter):
+                    ltp_adapter = cand
+                elif hasattr(cand, "close"):
+                    try:
+                        cand.close()
+                    except Exception:
+                        pass
+    raw_limit = daily_bars_limit
+    if raw_limit is None:
+        raw_env = ""
+        if hasattr(cfg, "env") and hasattr(cfg.env, "values") and isinstance(cfg.env.values, Mapping):
+            raw_env = str(cfg.env.values.get("GAMMA_HISTORY_BARS_LIMIT", "")).strip()
+        if not raw_env:
+            raw_env = os.environ.get("GAMMA_HISTORY_BARS_LIMIT", "").strip()
+        if raw_env.isdigit() and int(raw_env) >= 1:
+            raw_limit = int(raw_env)
+    effective_bars = (
+        min(int(cfg.zones.daily_bars), int(raw_limit))
+        if raw_limit is not None and int(raw_limit) >= 1
+        else int(cfg.zones.daily_bars)
+    )
+    if effective_bars < int(cfg.zones.daily_bars):
+        log.info("mark_levels: capping daily_bars to %d via GAMMA_HISTORY_BARS_LIMIT (config=%d)",
+                 effective_bars, cfg.zones.daily_bars)
     own_conn = conn is None
     conn = conn or db.connect(cfg.paths.db_path)
     db.migrate(conn)
@@ -582,13 +623,14 @@ def run(
                                "mode": "remark" if base_id else "full", "bars_fetched": False,
                                "base_run_id": base_id, "refresh_hm": refresh_hm}  # fmt: skip
     try:
+        price_adapter = ltp_adapter or adapter
         if base_id is not None:  # T-277: the price-only re-mark
             status, note, fields = _remark(conn, trade_date, run_id, base_id, symbols, adapter, cfg.spec_version,
-                                           refresh_hm, params, cfg.zones.daily_bars, universe_as_of,
-                                           bars_sink)  # fmt: skip
+                                           refresh_hm, params, effective_bars, universe_as_of,
+                                           bars_sink, ltp_adapter=price_adapter)  # fmt: skip
             summary.update(fields)
             return summary
-        _fyers_history_preflight(adapter, trade_date, cfg.zones.daily_bars)
+        _fyers_history_preflight(adapter, trade_date, effective_bars)
         summary["bars_fetched"] = True
         universe = load_universe(adapter, universe_as_of)
         if symbols:
@@ -600,7 +642,7 @@ def run(
 
         ltps: dict[int, float] = {}
         if ref == "ltp" and universe:
-            ltps = adapter.ltp([r.eq_security_id for r in universe], "NSE_EQ")
+            ltps = price_adapter.ltp([r.eq_security_id for r in universe], "NSE_EQ")
 
         rows: list[dict[str, Any]] = []
         n_sup = n_res = 0
@@ -631,7 +673,7 @@ def run(
                             "daily bars only", u.symbol, trade_date.isoformat())  # fmt: skip
             elif how == "intraday":
                 day_bar["intraday"] += 1
-            return full[-cfg.zones.daily_bars :]
+            return full[-effective_bars :]
 
         untrusted: set[str] = set()  # T-285: symbols whose bars failed the split guard this run
         late: set[str] = set()  # R1: prevclose symbols whose last bar is not the previous trading day
@@ -640,7 +682,7 @@ def run(
             """Fetch + mark one symbol; the BrokerError when its candles failed, else None. Auth errors propagate."""
             nonlocal n_sup, n_res
             try:
-                bars = fetch_bars(adapter, u.eq_security_id, trade_date, ref, cfg.zones.daily_bars)
+                bars = fetch_bars(adapter, u.eq_security_id, trade_date, ref, effective_bars)
             except BrokerAuthError:
                 raise
             except BrokerError as exc:

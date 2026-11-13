@@ -1,21 +1,20 @@
 # Known issues, gaps and release blockers
 
-**Current 3 November 2026 IST.** A HOLD denotes an incomplete qualification; it is not automatically a reproduced bug. Historical issues that are now bounded-PASS are retained below rather than mislabelled as production-fixed.
+**Updated after Phases 0–4 hardening.** Historical items resolved in the current workspace are tracked accurately below; live external provider testing and credential rotation obligations remain explicit.
 
-| ID | Category / severity | Current classification | Required closeout |
+| ID | Category / status | Current classification | Required closeout |
 |---|---|---|---|
-| G-R18-01 | Actual Runtime constructor/lifecycle | **BOUNDED PASS** on 244-source disposable candidate; not installed | Full integrated release qualification remains separate |
-| G-R18-02 | Persistent outbox crash safety | **BOUNDED PASS** for ambiguous-claim quarantine, not guaranteed delivery | External receipt/manual reconciliation/idempotency |
-| G-R18-03 | V1-to-paper-position lifecycle | **BOUNDED PASS** for full synthetic V1 lifecycle (signal -> trade_hook -> T1 -> T2 -> exit) in `tests/test_r19_runtime_lifecycle.py` | Full live market data & external Telegram receipt remain **HOLD** |
-| G-R18-04 | Feed restart stale-tick regression | **BOUNDED PASS**; broker-neutral candidate wired into `gammad/app.py` feed hook via `DurableTickQueue`, **24/24 bounded PASS** | Live market provider streaming qualification and backpressure testing |
-| G-R18-05 | Expired-contract/history entitlement and 2,000 bars | **HOLD** | Approved rights-backed read-only provider data-quality certification |
-| G-R18-06 | Production ledger ACL/rollback | **BOUNDED PASS** in R1.9 Phase 5 (`gammad/store/security.py`, `gammad/store/recovery.py`, wired into `serve_async` preflight; 14/14 tests in `tests/test_r19_storage_security.py`) | Production deployment (`R10H_APPLY=HOLD`) |
-| G-R19-01 | Concurrent independent multi-broker accounts | **BOUNDED PASS** in R1.9 candidate (`gammad/broker/account.py`, wired into `Runtime.adapter()`) | Production live multi-broker credential provisioning |
-| G-R19-02 | Historical-data provider independence | **BOUNDED PASS** in R1.9 candidate (`HistoryProviderConfig`, wired into `Runtime.history_adapter()`) | Provider data contract validation and rate-budget enforcement |
-| G-R18-07 | Real Telegram follow-ups and reconciliation | **HOLD** | Controlled external transport evidence and safe ambiguous retry/reconcile policy |
-| G-AUTH-01 | Broker catalog vs verified adapters | **HOLD** (registered ≠ live-qualified) | Each adapter's authenticated feed/history capability test |
-| G-OPS-01 | FYERS account availability | **USER-REPORTED UNAVAILABLE** due to inactivity | Continue offline without FYERS; account restoration separate from development |
-| G-RELEASE-01 | Candidate packaging & rollback qualification | **BOUNDED PASS** for candidate ZIP packaging (249 files, SHA-256 `886A2F65C494AD975345550BEA34BD6DD34E1CC3602A46CA9AB565E3EAD4038B`), isolated sandbox execution (56/56 PASS), and rollback rehearsal; production Apply remains **HOLD** | User-authorized production Apply/Verify |
+| G-R18-01 | Actual Runtime constructor/lifecycle | **PASS (offline suite)** (`tests/test_r19_runtime_lifecycle.py`, `tests/test_v1r_ladder_exits.py`) | Live market session verification |
+| G-R18-02 | Persistent outbox crash safety | **BOUNDED PASS** for ambiguous-claim quarantine | External Telegram receipt reconciliation |
+| G-R18-03 | V1 & `V1N` lifecycle, CAS fallback, ladder fees & ban retry | **PASS (offline suite)** (`tests/test_r19_runtime_lifecycle.py`, `test_v1r_ladder_exits.py`, `test_jobs_history_ban.py`) | Live market stream replay check |
+| G-R18-04 | Feed watermark (`ts == recv`, sub-ms), backpressure & bar volume | **PASS (offline suite)** (`tests/test_r19_broker_neutral.py`, `tests/test_feed_watermark_bars.py`) | Live provider burst soak test |
+| G-R18-05 | Expired-contract/history entitlement & FYERS 5y cap | **MITIGATED (offline)** via decoupled `resolve_configured_adapter` + `_fyers_history_preflight` | Approved rights-backed live data test |
+| G-R18-06 | Storage ACLs, rollback guard & `.env` backup containment | **PASS (offline suite)** (`tests/test_r19_storage_security.py`, `data/backups/` max-3 rotation) | Periodic disk ACL audit (`Check Setup.cmd`) |
+| G-R19-01 | Concurrent multi-broker, no-default-broker & R1.4/R1.5 Manager | **PASS (offline suite)** (`tests/test_api_security_broker_mgr.py`: dynamic port, SPA JSON/Origin guard, WS redaction, 11-broker R1.5 verify, unset-broker startup & `.env` switch persistence) | Live per-broker session verification |
+| G-R19-02 | Historical-data provider independence | **PASS (offline suite)** (`GAMMA_HISTORY_PROVIDER`, `definedge` Stage 1, `GAMMA_HISTORY_BARS_LIMIT`, `FYERS_HISTORY_TIER`, `"none"`) | Provider rate-budget live test |
+| G-SEC-01 | Prior `.env` (`FYERS_*`) tracked in git history before `.gitignore` / `git rm --cached` | **ACTION REQUIRED (user)** | **Rotate exposed `FYERS_*` credentials** in FYERS portal and update local `.env` |
+| G-AUTH-01 | Broker catalog vs live-qualified sessions | **OPEN** (11 registered; no default broker at startup; auto-switch allowed for 10 non-beta after R1.5 verify) | User click **Verify session & feed (R1.5)** & **Stage scanner switch** per broker |
+| G-R18-07 | Real Telegram follow-ups and reconciliation | **HOLD** | Controlled external Telegram verification (`ORDERS=0`) |
 
 ## Closed investigation / bounded acceptance (not installed deployment)
 

@@ -110,7 +110,7 @@
       revision.textContent='Saved revision '+d.revision;
       const stockText=d.stocks.length?d.stocks.join(' · '):'No stock selections';
       const indexText=d.indices.length?d.indices.join(' · '):'No index selections';
-      summary.textContent='F&O: '+stockText+'  |  Indices: '+indexText;
+      summary.textContent='Saved draft (scanner filtering inactive):  F&O: '+stockText+'  |  Indices: '+indexText;
       enabled(true);
     }
     async function refreshData() {

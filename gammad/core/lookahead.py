@@ -69,4 +69,6 @@ def coming(
 
 
 def from_files(today: date) -> tuple[Coming, ...]:
+    if not DEFAULT_CALENDAR.exists():
+        return ()
     return coming(today, load_events(), sessions.load_eras())

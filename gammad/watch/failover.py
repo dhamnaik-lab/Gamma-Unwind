@@ -10,6 +10,7 @@ from collections.abc import Callable, Iterable, Mapping
 from dataclasses import astuple
 
 from gammad.log import get_logger
+from gammad.watch.feed import safe_put_tick
 from gammad.watch.feed_protocol import Feed, Instrument, QuoteSource, Tick, normalize_instruments
 from gammad.watch.pollfeed import PollFeed
 
@@ -134,10 +135,12 @@ class FailoverFeed:
         if previous is not None and (older_poll or snapshot == previous[1]):
             self.dupes_dropped += 1
             return
-        try:
-            self.out.put_nowait(tick)
-        except asyncio.QueueFull:
+        ok, drop_reason = safe_put_tick(self.out, tick)
+        if not ok:
             self.dropped += 1
+            if drop_reason and drop_reason != "queue_full" and (self.dropped == 1 or self.dropped % 100 == 0):
+                log.warning("failover: tick held (%s) on %s %d (total dropped=%d)", drop_reason, tick.segment,
+                            tick.security_id, self.dropped)
             return
         # Primary receive-stamped OI and exchange-stamped quotes can arrive out of
         # timestamp order. Forward them, but never lower the poll watermark.

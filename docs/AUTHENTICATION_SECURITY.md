@@ -18,7 +18,7 @@ No real credentials or live calls are authorized by this documentation. `R10H_AP
 - `POST /api/token/login` parses the request body itself, validates exact expected login fields and requires `X-Gamma-Control: 1` with JSON content-type. The source avoids echoing malformed secret-field content in errors.
 - `GET /api/token` is a **status** route; `POST /api/token` can update a token. These are different trust surfaces, so do not treat a reachable local route as automatically safe for remote clients.
 - `/auth/{broker}/callback` is an OAuth callback route. Redirect/state validation must be maintained by the underlying flow; never expose raw authorization codes in docs or evidence.
-- `POST /api/brokers/stage` checks loopback origin and local-control header before changing the staged broker.
+- `POST /api/brokers/stage` is disabled (`409`) by R1.4 middleware; verified staging goes through `POST /api/broker-manager/switch/{name}` (`gamma_r14.switch`), which enforces loopback origin, `X-Gamma-Control: 1`, `expected_active`, `SWITCH TO <BROKER>` confirmation, and R1.5 verification, creating `.env` from `.env.example` if absent.
 
 ## Security invariants
 

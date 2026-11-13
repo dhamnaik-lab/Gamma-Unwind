@@ -69,6 +69,7 @@ from gammad.watch.feed import (
     Instrument,
     Tick,
     WSLike,
+    safe_put_tick,
     zero_oi_as_absent,
 )
 
@@ -321,10 +322,12 @@ class FeedBase:
             warning = ltt_offset_warning(t)
             if warning:
                 log.warning("%s", warning)
-        try:
-            self.out.put_nowait(t)
-        except asyncio.QueueFull:
+        ok, drop_reason = safe_put_tick(self.out, t)
+        if not ok:
             self.dropped += 1
+            if drop_reason and drop_reason != "queue_full" and (self.dropped == 1 or self.dropped % 100 == 0):
+                log.warning("feed: tick held (%s) on %s %d (total dropped=%d)", drop_reason, t.segment, t.security_id,
+                            self.dropped)
             return False
         self.emitted += 1
         return True
